@@ -1,0 +1,12 @@
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'ch.qos.logback:logback-classic:1.4.12'
+        testImplementation 'junit:junit:4.13.1'
+    }
+}

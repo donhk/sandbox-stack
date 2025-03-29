@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(':sbx-common')
+    implementation 'com.typesafe.akka:akka-actor_2.13:2.6.16'
+    implementation fileTree(dir: 'src/main/libs', include: ['*.jar'])
+}
+
+test {
+
+    jvmArgs "-Dvbox.home=/usr/lib/virtualbox"
+
+    testLogging {
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showStandardStreams = true
+    }
+}
