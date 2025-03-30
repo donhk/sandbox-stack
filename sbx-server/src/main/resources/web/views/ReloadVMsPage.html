@@ -1,0 +1,30 @@
+<div id="main">
+
+    <style scoped>
+        .button-success {
+            color: white;
+            border-radius: 4px;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        }
+
+        .button-success {
+            background: rgb(28, 184, 65); /* this is a green */
+        }
+    </style>
+
+    <div class="header">
+        <h1>Usage stats &#9749;</h1>
+        <h2>Some cool sandboxer stats</h2>
+    </div>
+
+    <div class="content">
+        <h2 class="content-subhead">Push the below button to reload</h2>
+        <button id="refresh" class="button-success pure-button">Refresh {status}</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    document.getElementById("refresh").onclick = function () {
+        window.location.href = "/reload?update={secret}";
+    };
+</script>
