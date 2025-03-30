@@ -11,13 +11,13 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class DBManager {
+public class VMDataAccessService {
 
-    private final Logger logger = LoggerFactory.getLogger(DBManager.class);
+    private final Logger logger = LoggerFactory.getLogger(VMDataAccessService.class);
     private final HikariDataSource conn;
     private final Config config;
 
-    public DBManager(HikariDataSource conn, Config config) {
+    public VMDataAccessService(HikariDataSource conn, Config config) {
         this.conn = conn;
         this.config = config;
     }

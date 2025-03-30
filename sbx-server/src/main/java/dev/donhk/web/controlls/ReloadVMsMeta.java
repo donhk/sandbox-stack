@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static dev.donhk.system.SystemWorker.instructions;
+import static dev.donhk.system.VMMetadataSynchronizer.instructions;
+import static dev.donhk.vbox.Constants.NA;
 
 public class ReloadVMsMeta extends HttpServlet {
 
@@ -55,7 +56,7 @@ public class ReloadVMsMeta extends HttpServlet {
         try {
             return process(Utils.resource2txt(viewName));
         } catch (IOException e) {
-            return "N/A";
+            return NA;
         }
     }
 

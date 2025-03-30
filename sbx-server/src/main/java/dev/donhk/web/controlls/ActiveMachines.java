@@ -1,6 +1,6 @@
 package dev.donhk.web.controlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.web.core.Controller;
 
@@ -9,11 +9,11 @@ import java.util.List;
 
 public class ActiveMachines extends Controller {
 
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
-    public ActiveMachines(DBManager dbManager) {
+    public ActiveMachines(VMDataAccessService VMDataAccessService) {
         super("web/views/Layout.html");
-        this.dbManager = dbManager;
+        this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class ActiveMachines extends Controller {
         variables.put("ui-js", "<script>" + loadResource("web/js/ui.js") + "</script>");
 
         try {
-            List<ActiveMachineRow> machines = dbManager.getActiveMachines();
+            List<ActiveMachineRow> machines = VMDataAccessService.getActiveMachines();
             StringBuilder sb = new StringBuilder();
             for (ActiveMachineRow meta : machines) {
                 sb.append("<tr>");

@@ -1,8 +1,7 @@
 package dev.donhk.vbox;
 
 import dev.donhk.helpers.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tinylog.Logger;
 import org.virtualbox_7_1.*;
 
 import java.io.File;
@@ -32,7 +31,6 @@ public class VBoxManager {
         vboxmanage list natnets
      */
 
-    private final Logger logger = LoggerFactory.getLogger(VBoxManager.class);
     private final VirtualBoxManager boxManager;
     private final IVirtualBox vbox;
     private final static List<String> groups = Collections.singletonList("/sandboxer/sbx-clients");
@@ -114,13 +112,13 @@ public class VBoxManager {
             wait(progress);
             //if the nat network was not provided, make this vm to use a NAT
             if (natNetwork == null) {
-                logger.info(machineName + " will use a NAT");
+                Logger.info(machineName + " will use a NAT");
                 //make this machine a NAT one (isolated network)
                 INetworkAdapter net = newMachine.getNetworkAdapter(firstAdapter);
                 net.setAttachmentType(NetworkAttachmentType.NAT);
                 net.setEnabled(true);
             } else {
-                logger.info(machineName + " will use a NAT Network " + natNetwork);
+                Logger.info(machineName + " will use a NAT Network " + natNetwork);
                 //set this machine to a NAT Network (this can be used for other VMs)
                 //The total number of adapters per machine is defined by the
                 //ISystemProperties::getMaxNetworkAdapters() property, so the maximum slot number is one less
@@ -144,12 +142,12 @@ public class VBoxManager {
                         networkAdapter.setAttachmentType(attachmentType);
                         networkAdapter.setInternalNetwork(inetName);
                     }
-                    logger.info("Enabling adapter " + adapter + " as " + attachmentType.name() + " for " + machineName);
+                    Logger.info("Enabling adapter " + adapter + " as " + attachmentType.name() + " for " + machineName);
                     networkAdapter.setEnabled(true);
                 }
             }
         } catch (Exception e) {
-            logger.error("Fatal error " + e.getMessage(), e);
+            Logger.error("Fatal error " + e.getMessage(), e);
         } finally {
             //save changes and register
             newMachine.saveSettings();
@@ -272,7 +270,7 @@ public class VBoxManager {
         }
         //vm hard limit
         if (numDisks <= 0 || numDisks >= 28) {
-            logger.error("Invalid number of disks specified [" + numDisks + "]");
+            Logger.error("Invalid number of disks specified [" + numDisks + "]");
             return null;
         }
         List<String> disks = new ArrayList<>();
@@ -292,7 +290,7 @@ public class VBoxManager {
             // /location/base/machine_name_#.vdi
             String disk = locationBase + File.separator + machineName + "_" + i + "." + format;
             disks.add(disk);
-            logger.info("Media will be created on :" + disk);
+            Logger.info("Media will be created on :" + disk);
             //https://www.virtualbox.org/sdkref/interface_i_system_properties.html#a3fddf22466361f98b6dc9fc4458d1049
             IMedium medium;
             try {
@@ -303,7 +301,7 @@ public class VBoxManager {
                         /*aDeviceTypeType*/DeviceType.HardDisk
                 );
             } catch (Exception e) {
-                logger.error("Failed to create medium", e);
+                Logger.error("Failed to create medium", e);
                 return null;
             }
         /*
@@ -330,7 +328,7 @@ public class VBoxManager {
                 //Allow using this medium concurrently by several machines.
                 medium.setType(MediumType.Shareable);
             } catch (Exception e) {
-                logger.error("Error creating storage unit {}", disk, e);
+                Logger.error("Error creating storage unit {}", disk, e);
                 return null;
             }
         }
@@ -369,22 +367,22 @@ public class VBoxManager {
                     controllerName = StorageBus.SATA.name();
                     storageController = xMachine.getStorageControllerByName(controllerName); //default name
                     port = countFreeSATAPorts(xMachine.getMediumAttachmentsOfController(controllerName)) + 1; // some ports might be already in use
-                    logger.info("busy ports from [0-" + port + "] (exclusive) for " + machineName);
+                    Logger.info("busy ports from [0-" + port + "] (exclusive) for " + machineName);
                 } else {
                     controllerName = machineName; // use the machine name as controller name
                     storageController = xMachine.addStorageController(controllerName, StorageBus.SATA);
                     port = 0; // start from the port zero
-                    logger.info("free ports from 0 for " + machineName);
+                    Logger.info("free ports from 0 for " + machineName);
                 }
                 //total ports needed  =  in_use + required
                 final long portsNeeded = port + sharedStorageDisks.size();
                 //enable another port on the vm
-                logger.info("MaxPortCount .............. " + storageController.getMaxPortCount() + " for " + machineName);
-                logger.info("MinPortCount .............. " + storageController.getMinPortCount() + " for " + machineName);
-                logger.info("(before update) PortCount . " + storageController.getPortCount() + " for " + machineName);
-                logger.info("updating port count to .... " + portsNeeded + " for " + machineName);
+                Logger.info("MaxPortCount .............. " + storageController.getMaxPortCount() + " for " + machineName);
+                Logger.info("MinPortCount .............. " + storageController.getMinPortCount() + " for " + machineName);
+                Logger.info("(before update) PortCount . " + storageController.getPortCount() + " for " + machineName);
+                Logger.info("updating port count to .... " + portsNeeded + " for " + machineName);
                 storageController.setPortCount(portsNeeded);
-                logger.info("(after update) PortCount .. " + storageController.getPortCount() + " for " + machineName);
+                Logger.info("(after update) PortCount .. " + storageController.getPortCount() + " for " + machineName);
                 //for each disk, open it up and mount it
                 for (String sharedStorageDisk : sharedStorageDisks) {
                     //open the media
@@ -435,7 +433,7 @@ public class VBoxManager {
     private int countFreeSATAPorts(List<IMediumAttachment> attachments) {
         int port = 0;
         for (IMediumAttachment attachment : attachments) {
-            logger.info("[" + attachment.getPort() + "] [" + attachment.getController() + "] " + attachment.getType().name());
+            Logger.info("[" + attachment.getPort() + "] [" + attachment.getController() + "] " + attachment.getType().name());
             port = attachment.getPort();
         }
         return port;
@@ -524,7 +522,7 @@ public class VBoxManager {
             }
         } finally {
             waitToUnlock(session, machine);
-            logger.info("Deleting machine " + machineName);
+            Logger.info("Deleting machine " + machineName);
             List<IMedium> media = machine.unregister(CleanupMode.DetachAllReturnHardDisksOnly);
             machine.deleteConfig(media);
         }
@@ -592,16 +590,16 @@ public class VBoxManager {
         long elapsed = 0;
         while (!SessionState.Unlocked.equals(sessionState)) {
             sessionState = machine.getSessionState();
-            logger.info("Waiting for session unlock...[{}][{}]", sessionState.name(), machine.getName());
+            Logger.info("Waiting for session unlock...[{}][{}]", sessionState.name(), machine.getName());
             try {
                 TimeUnit.MILLISECONDS.sleep(lookup);
                 elapsed += lookup;
             } catch (InterruptedException e) {
-                logger.warn("Interrupted while waiting for session to be unlocked {} is {}", machine.getName(), machine.getSessionState().name());
+                Logger.warn("Interrupted while waiting for session to be unlocked {} is {}", machine.getName(), machine.getSessionState().name());
             }
             if (elapsed > maxWaitTime) {
-                logger.warn("max wait time for session unlock reached for " + machine.getName() + " " + machine.getSessionState().name());
-                Utils.killVMHardWay(machine.getName(), logger);
+                Logger.warn("max wait time for session unlock reached for " + machine.getName() + " " + machine.getSessionState().name());
+                Utils.killVMHardWay(machine.getName());
             }
         }
     }
@@ -629,7 +627,7 @@ public class VBoxManager {
         this.progress = progress;
         progress.waitForCompletion(-1);
         if (progress.getResultCode() != 0) {
-            logger.error("Operation failed: {}", progress.getErrorInfo().getText());
+            Logger.error("Operation failed: {}", progress.getErrorInfo().getText());
         }
     }
 
@@ -715,7 +713,7 @@ public class VBoxManager {
         if (natNetworkExists(networkName)) {
             return false;
         }
-        logger.info("Creating nat network " + networkName);
+        Logger.info("Creating nat network " + networkName);
         INATNetwork natNetwork = vbox.createNATNetwork(networkName);
         natNetwork.setIPv6Enabled(false);
         /*
@@ -735,7 +733,7 @@ public class VBoxManager {
         */
         natNetwork.setNetwork("10.0.6.0/28");
         natNetwork.setNeedDhcpServer(true);
-        logger.info("Creating dhcp " + networkName);
+        Logger.info("Creating dhcp " + networkName);
         IDHCPServer dhcp = vbox.createDHCPServer(networkName);
         dhcp.setConfiguration(
                 /*IPAddress*/ "10.0.6.3",
@@ -758,7 +756,7 @@ public class VBoxManager {
             return false;
         }
         try {
-            logger.info("looking dhcp for " + networkName);
+            Logger.info("looking dhcp for " + networkName);
             IDHCPServer dhcp = null;
             for (IDHCPServer server : vbox.getDHCPServers()) {
                 if (server.getNetworkName().equals(networkName)) {
@@ -769,10 +767,10 @@ public class VBoxManager {
             if (dhcp != null) {
                 dhcp.stop();
                 dhcp.setEnabled(false);
-                logger.info("Removing dhcp " + networkName);
+                Logger.info("Removing dhcp " + networkName);
                 vbox.removeDHCPServer(dhcp);
             }
-            logger.info("looking natNet for " + networkName);
+            Logger.info("looking natNet for " + networkName);
             INATNetwork natNet = null;
             for (INATNetwork network : vbox.getNATNetworks()) {
                 if (network.getNetworkName().equals(networkName)) {
@@ -782,11 +780,11 @@ public class VBoxManager {
             if (natNet != null) {
                 natNet.stop();
                 natNet.setEnabled(false);
-                logger.info("Removing nat network " + networkName);
+                Logger.info("Removing nat network " + networkName);
                 vbox.removeNATNetwork(natNet);
             }
         } catch (Exception e) {
-            logger.error("failed to remove nat network {}", networkName, e);
+            Logger.error("failed to remove nat network {}", networkName, e);
         }
         return true;
     }

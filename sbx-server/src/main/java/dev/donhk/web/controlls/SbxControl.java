@@ -1,6 +1,6 @@
 package dev.donhk.web.controlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.Tasks;
 import dev.donhk.sbx.ClientConnection;
 import dev.donhk.web.sbxControlls.*;
@@ -14,11 +14,11 @@ import java.util.List;
 
 public class SbxControl extends HttpServlet {
 
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
     private final List<ClientConnection> clientConnections;
 
-    public SbxControl(DBManager dbManager, List<ClientConnection> clientConnections) {
-        this.dbManager = dbManager;
+    public SbxControl(VMDataAccessService VMDataAccessService, List<ClientConnection> clientConnections) {
+        this.VMDataAccessService = VMDataAccessService;
         this.clientConnections = clientConnections;
     }
 
@@ -32,19 +32,19 @@ public class SbxControl extends HttpServlet {
     private WebCmd getWebCmd(HttpServletRequest req) {
         switch (findTask(req)) {
             case UPDATE:
-                return new UpdateVM(dbManager);
+                return new UpdateVM(VMDataAccessService);
             case VMS_RUNNING:
-                return new VmsRunning(dbManager);
+                return new VmsRunning(VMDataAccessService);
             case KILL:
                 return new KillVM(clientConnections);
             case GODKILL:
                 return new GodKill(clientConnections);
             case VMS_INFO:
-                return new VmsInfo(dbManager);
+                return new VmsInfo(VMDataAccessService);
             case HELP:
                 return new Help();
             case ADMIN_MSG:
-                return new PostService(dbManager);
+                return new PostService(VMDataAccessService);
             case NULL:
             default:
                 return new Nothing();

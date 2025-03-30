@@ -1,6 +1,6 @@
 package dev.donhk.web.controlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.MachineHistRow;
 import dev.donhk.web.core.Controller;
 
@@ -9,11 +9,11 @@ import java.util.List;
 
 public class UsageStats extends Controller {
 
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
-    public UsageStats(DBManager dbManager) {
+    public UsageStats(VMDataAccessService VMDataAccessService) {
         super("web/views/Layout.html");
-        this.dbManager = dbManager;
+        this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
@@ -24,13 +24,13 @@ public class UsageStats extends Controller {
 
         try {
 
-            int totalVMs = dbManager.getTotalMachinesHist();
-            int totalUpdates = dbManager.getTotalUpdatesServed();
+            int totalVMs = VMDataAccessService.getTotalMachinesHist();
+            int totalUpdates = VMDataAccessService.getTotalUpdatesServed();
 
             variables.put("totalVMs", String.valueOf(totalVMs));
             variables.put("totalUpdates", String.valueOf(totalUpdates));
 
-            List<MachineHistRow> rows = dbManager.getMachinesHistPreview();
+            List<MachineHistRow> rows = VMDataAccessService.getMachinesHistPreview();
             StringBuilder sb = new StringBuilder();
             for (MachineHistRow meta : rows) {
                 sb.append("<tr>");

@@ -1,6 +1,6 @@
 package dev.donhk.sbx;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.helpers.Utils;
 import dev.donhk.pojos.*;
 import dev.donhk.vbox.LaunchMode;
@@ -34,7 +34,7 @@ public class ClientConnection {
     private boolean destroyMachineCalled = false;
     private boolean alive = false;         //this indicated whether this client connection is alive
     private final VBoxManager vBoxManager;
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
     private ScheduledExecutorService poller = null;
     private TimeMark lastClientContact;
@@ -54,7 +54,7 @@ public class ClientConnection {
     public ClientConnection(Socket socket, VirtualBoxManager boxManager, Connection conn) {
         this.socket = socket;
         this.vBoxManager = new VBoxManager(boxManager);
-        this.dbManager = new DBManager(conn);
+        this.VMDataAccessService = new VMDataAccessService(conn);
         //polling stuff
         ports.put("ssh", -1);
     }
@@ -190,7 +190,7 @@ public class ClientConnection {
         //we are just adding to the database to allow the other registration steps to succeed
         try {
             //register machine in db
-            dbManager.insertMachine(name, "", PREREGISTER, "NAT");
+            VMDataAccessService.insertMachine(name, "", PREREGISTER, "NAT");
 
             configurePolling();
 
@@ -208,19 +208,19 @@ public class ClientConnection {
     private void configurePolling() throws SQLException {
         synchronized (ClientConnection.class) {
             //get another port for the ssh connections
-            final int sshPort = dbManager.getHostPort();
+            final int sshPort = VMDataAccessService.getHostPort();
             ports.put("ssh", sshPort);
-            dbManager.updatePort(sshPort, HostPortStatus.BUSY);
-            final String sshPortStatus = dbManager.getPortStatus(sshPort);
+            VMDataAccessService.updatePort(sshPort, HostPortStatus.BUSY);
+            final String sshPortStatus = VMDataAccessService.getPortStatus(sshPort);
             logger.info("ssh port " + sshPort + " marked as " + sshPortStatus + " for " + name);
 
             //register machine ssh port
-            dbManager.insertRule(name, "ssh" + sshPort, sshPort, 22);
+            VMDataAccessService.insertRule(name, "ssh" + sshPort, sshPort, 22);
             logger.info(name + " port ssh[" + sshPort + "]");
         }
-        lastClientContact = new TimeMark(dbManager, name);
+        lastClientContact = new TimeMark(VMDataAccessService, name);
         //update the machine time for the very first time
-        dbManager.pollMachine(name);
+        VMDataAccessService.pollMachine(name);
         //starting polling service
         poller = Executors.newSingleThreadScheduledExecutor();
         poller.scheduleAtFixedRate(() -> {
@@ -268,7 +268,7 @@ public class ClientConnection {
                 String natNetwork = parts[3];
                 //review if this request is valid
                 logger.info(name + " requested to create a clone from: " + seedName + " " + snapshot);
-                if (!dbManager.machineAndSnapExist(seedName, snapshot)) {
+                if (!VMDataAccessService.machineAndSnapExist(seedName, snapshot)) {
                     output.println(INVALID_ARG);
                     throw new Exception("Invalid machine name or snapshot name [" + name + "]");
                 }
@@ -277,13 +277,13 @@ public class ClientConnection {
                 if (!natNetwork.equalsIgnoreCase("nat")) {
                     NAT_NETWORK = natNetwork;
                     logger.info("updating machines network information for " + name + " to use " + NAT_NETWORK);
-                    dbManager.updateVmNetworkInfo(name, NAT_NETWORK);
+                    VMDataAccessService.updateVmNetworkInfo(name, NAT_NETWORK);
                     HAS_NAT_NETWORK = true;
                 }
                 //for now lets use only NATs due to the dhcp issues
                 logger.info("Cloning " + name + " from " + seedName + " (" + snapshot + ") attached to " + NAT_NETWORK);
                 vBoxManager.cloneMachineFromSeed(seedName, snapshot, name, NAT_NETWORK);
-                dbManager.updateVmMeta(name, "CLONING", parts[1]);
+                VMDataAccessService.updateVmMeta(name, "CLONING", parts[1]);
                 //if you need to created a shared dir, this is a
                 //good point to do so
             } catch (Exception e) {
@@ -301,7 +301,7 @@ public class ClientConnection {
     private void getFreePort() {
         int freePort = -1;
         try {
-            freePort = dbManager.getHostPort();
+            freePort = VMDataAccessService.getHostPort();
         } catch (SQLException e) {
             logger.warn("error getting free port " + e.getMessage());
         }
@@ -402,7 +402,7 @@ public class ClientConnection {
                 }
                 //this might have issue on concurrent environments, watch out
                 //as one port might be attempted to use by 2 clients
-                dbManager.insertRule(name, ruleName, hostPort, guestPort);
+                VMDataAccessService.insertRule(name, ruleName, hostPort, guestPort);
                 //save the port in the map for later clean up
                 ports.put(ruleName, hostPort);
                 logger.info("Custom port forward rule " + name + " created " + hostPort + "->" + guestPort + " [" + ruleName + "]");
@@ -440,7 +440,7 @@ public class ClientConnection {
                 }
                 //this might have issue on concurrent environments, watch out
                 //as one port might be attempted to use by 2 clients
-                dbManager.updateRule(name, oldRuleName, newRuleName, hostPort, guestPort);
+                VMDataAccessService.updateRule(name, oldRuleName, newRuleName, hostPort, guestPort);
                 //save the port in the map for later clean up
                 ports.remove(oldRuleName);
                 ports.put(newRuleName, hostPort);
@@ -461,7 +461,7 @@ public class ClientConnection {
         logger.info("Updating forward rule for " + name);
         try {
             logger.info("Removing old forward rule for " + name);
-            Rule sshRule = dbManager.geSSHRule(name);
+            Rule sshRule = VMDataAccessService.geSSHRule(name);
             //remove old rule
             logger.info("Creating new forward rule for " + name);
             if (HAS_NAT_NETWORK) {
@@ -471,7 +471,7 @@ public class ClientConnection {
                 vBoxManager.rmNATPortForwardRule(name, sshRule.rule_name);
                 vBoxManager.addNATPortForwardRule(ports.get("ssh"), 22, name, sshRule.rule_name);
             }
-            dbManager.updateMachine(name, vBoxManager.getMachineIPv4(name), "WAITING_IP");
+            VMDataAccessService.updateMachine(name, vBoxManager.getMachineIPv4(name), "WAITING_IP");
         } catch (Exception e) {
             e.printStackTrace();
             result = RUNTIME_ERR;
@@ -485,10 +485,10 @@ public class ClientConnection {
     private void startUpMachine() {
         String result = OPERATION_SUCCESSFUL;
         try {
-            dbManager.updateVmState(name, "STARTING_UP");
+            VMDataAccessService.updateVmState(name, "STARTING_UP");
             vBoxManager.launchMachine(name, LaunchMode.headless);
             //update machine register with the new IP
-            dbManager.updateMachine(name, vBoxManager.getMachineIPv4(name), "WAITING_IP");
+            VMDataAccessService.updateMachine(name, vBoxManager.getMachineIPv4(name), "WAITING_IP");
         } catch (Exception e) {
             logger.warn(e.getMessage());
             result = RUNTIME_ERR;
@@ -509,7 +509,7 @@ public class ClientConnection {
     private void confirmMachineUp() {
         String result = OPERATION_SUCCESSFUL;
         try {
-            dbManager.updateMachine(name, vBoxManager.getMachineIPv4(name), "UP+IP ASSIGNED");
+            VMDataAccessService.updateMachine(name, vBoxManager.getMachineIPv4(name), "UP+IP ASSIGNED");
         } catch (Exception e) {
             logger.warn(e.getMessage());
             result = RUNTIME_ERR;
@@ -524,7 +524,7 @@ public class ClientConnection {
         String result = name;
         try {
             logger.info(name + " requested NAT Network");
-            dbManager.insertNATNetwork(name);
+            VMDataAccessService.insertNATNetwork(name);
             if (vBoxManager.createNatNetwork(name)) {
                 logger.info("NAT Network " + name + " created successfully");
             } else {
@@ -546,7 +546,7 @@ public class ClientConnection {
         destroyMachineCalled = true;
         final DestroyVM terminator =
                 DestroyVM.newInstance(
-                        dbManager,
+                        VMDataAccessService,
                         ports,
                         HAS_NAT_NETWORK,
                         NAT_NETWORK,

@@ -1,6 +1,6 @@
 package dev.donhk.sbx;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.pojos.HostPortStatus;
 import dev.donhk.pojos.Rule;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class DestroyVM {
 
     private final Logger logger = LoggerFactory.getLogger(DestroyVM.class);
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
     private final Map<String, Integer> ports;
     private final boolean hasNatNetwork;
     private final String natNetwork;
@@ -23,13 +23,13 @@ public class DestroyVM {
     private final String lastState;
     private final VBoxManager vBoxManager;
 
-    private DestroyVM(DBManager dbManager,
+    private DestroyVM(VMDataAccessService VMDataAccessService,
                       Map<String, Integer> ports,
                       boolean hasNatNetwork,
                       String natNetwork,
                       String vmName,
                       String lastState, VBoxManager vBoxManager) {
-        this.dbManager = dbManager;
+        this.VMDataAccessService = VMDataAccessService;
         this.ports = ports;
         this.hasNatNetwork = hasNatNetwork;
         this.natNetwork = natNetwork;
@@ -38,13 +38,13 @@ public class DestroyVM {
         this.vBoxManager = vBoxManager;
     }
 
-    static DestroyVM newInstance(DBManager dbManager,
+    static DestroyVM newInstance(VMDataAccessService VMDataAccessService,
                                  Map<String, Integer> ports,
                                  boolean hasNatNetwork,
                                  String natNetwork, String vmName,
                                  String lastState,
                                  VBoxManager vBoxManager) {
-        return new DestroyVM(dbManager, ports, hasNatNetwork, natNetwork, vmName, lastState, vBoxManager);
+        return new DestroyVM(VMDataAccessService, ports, hasNatNetwork, natNetwork, vmName, lastState, vBoxManager);
     }
 
     void destroy() {
@@ -106,7 +106,7 @@ public class DestroyVM {
     private void removeRulesAssociatedWithThisNatNetwork() {
         logger.info("Removing rules associated with vm " + vmName + " from nat network " + natNetwork);
         try {
-            final List<Rule> rules = dbManager.getRules(vmName);
+            final List<Rule> rules = VMDataAccessService.getRules(vmName);
             for (Rule rule : rules) {
                 vBoxManager.rmNATNetworkPortForwardRule(natNetwork, rule.rule_name);
             }
@@ -118,7 +118,7 @@ public class DestroyVM {
 
     private void removeRulesOfThisVM() {
         try {
-            final List<Rule> rules = dbManager.getRules(vmName);
+            final List<Rule> rules = VMDataAccessService.getRules(vmName);
             for (Rule rule : rules) {
                 vBoxManager.rmNATPortForwardRule(vmName, rule.rule_name);
             }
@@ -133,12 +133,12 @@ public class DestroyVM {
         //a machine creation might have failed but the rule might have been added
         logger.info("Freeing ports used by " + vmName);
         try {
-            dbManager.dropRule(vmName);
+            VMDataAccessService.dropRule(vmName);
             for (Map.Entry<String, Integer> e : ports.entrySet()) {
                 int port = e.getValue();
                 String portName = e.getKey();
                 logger.info("Freeing " + portName + " " + port + " " + vmName);
-                dbManager.updatePort(port, HostPortStatus.FREE);
+                VMDataAccessService.updatePort(port, HostPortStatus.FREE);
             }
         } catch (SQLException e) {
             logger.warn("error removing rules info " + e.getMessage(), e);
@@ -146,11 +146,11 @@ public class DestroyVM {
     }
 
     private void removeVMMetadataInDB() {
-        if (dbManager.machineExists(vmName)) {
+        if (VMDataAccessService.machineExists(vmName)) {
             try {
                 logger.info("Removing metadata of " + vmName);
-                dbManager.updateVmState(vmName, lastState);
-                dbManager.removeMachine(vmName);
+                VMDataAccessService.updateVmState(vmName, lastState);
+                VMDataAccessService.removeMachine(vmName);
             } catch (SQLException e) {
                 logger.warn("error removing vm meta " + e.getMessage(), e);
             }
@@ -159,7 +159,7 @@ public class DestroyVM {
 
     private boolean isNatNetworkUsedByOtherVM() {
         try {
-            for (ActiveMachineRow otherVM : dbManager.getActiveMachines()) {
+            for (ActiveMachineRow otherVM : VMDataAccessService.getActiveMachines()) {
                 //ignore itself
                 if (otherVM.name.equals(vmName)) {
                     continue;
@@ -184,7 +184,7 @@ public class DestroyVM {
         }
 
         try {
-            dbManager.dropNATNetwork(vmName);
+            VMDataAccessService.dropNATNetwork(vmName);
         } catch (SQLException e) {
             logger.warn(e.getMessage(), e);
         }

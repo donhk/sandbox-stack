@@ -1,6 +1,5 @@
 package dev.donhk.vbox;
 
-import akka.actor.ActorRef;
 import dev.donhk.pojos.MachineMeta;
 import org.virtualbox_7_1.IMachine;
 import org.virtualbox_7_1.ISnapshot;
@@ -27,7 +26,7 @@ public class MetaExtractor {
     /**
      * Reference to VBoxManager to interact with VirtualBox API
      */
-    private final ActorRef vboxActor;
+    private final VBoxManager boxManager;
 
     /**
      * Temporary collection of extracted machine metadata from snapshot traversal
@@ -37,10 +36,10 @@ public class MetaExtractor {
     /**
      * Constructs a MetaExtractor with a given VBoxManager.
      *
-     * @param vboxActor the VBoxManager instance used to fetch machines and snapshots
+     * @param boxManager the VBoxManager instance used to fetch machines and snapshots
      */
-    public MetaExtractor(ActorRef vboxActor) {
-        this.vboxActor = vboxActor;
+    public MetaExtractor(VBoxManager boxManager) {
+        this.boxManager = boxManager;
     }
 
     /**
@@ -52,7 +51,7 @@ public class MetaExtractor {
      */
     public List<MachineMeta> genMetaInfo() {
         // Iterate over powered-off machines
-        for (IMachine m : vBoxManager.getMachines(MachineState.PoweredOff)) {
+        for (IMachine m : boxManager.getMachines(MachineState.PoweredOff)) {
             // Only include machines in the SBX_GROUP group
             if (!m.getGroups().toString().toLowerCase().contains(SBX_GROUP)) {
                 continue;

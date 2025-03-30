@@ -1,6 +1,6 @@
 package dev.donhk.web.controlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.MachineMeta;
 import dev.donhk.web.core.Controller;
 
@@ -9,11 +9,11 @@ import java.util.List;
 
 public class VMsMeta extends Controller {
 
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
-    public VMsMeta(DBManager dbManager) {
+    public VMsMeta(VMDataAccessService VMDataAccessService) {
         super("web/views/Layout.html");
-        this.dbManager = dbManager;
+        this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
@@ -23,7 +23,7 @@ public class VMsMeta extends Controller {
         variables.put("ui-js", "<script>" + loadResource("web/js/ui.js") + "</script>");
 
         try {
-            List<MachineMeta> info = dbManager.getMachinesMetaInfo();
+            List<MachineMeta> info = VMDataAccessService.getMachinesMetaInfo();
             StringBuilder sb = new StringBuilder();
             for (MachineMeta meta : info) {
                 sb.append("<tr>");

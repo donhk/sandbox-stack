@@ -1,6 +1,6 @@
 package dev.donhk.web.sbxControlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.ActiveMachineRow;
 import org.eclipse.jetty.util.UrlEncoded;
 
@@ -12,10 +12,10 @@ import java.util.List;
 
 public class PostService implements WebCmd {
 
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
-    public PostService(DBManager dbManager) {
-        this.dbManager = dbManager;
+    public PostService(VMDataAccessService VMDataAccessService) {
+        this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
@@ -30,18 +30,18 @@ public class PostService implements WebCmd {
 
         try {
             if (target.equals("all_vms")) {
-                final List<ActiveMachineRow> activeMachineRows = dbManager.getActiveMachines();
+                final List<ActiveMachineRow> activeMachineRows = VMDataAccessService.getActiveMachines();
                 int total = 0;
                 for (ActiveMachineRow row : activeMachineRows) {
-                    dbManager.insertAdminMessage(message, row.name);
+                    VMDataAccessService.insertAdminMessage(message, row.name);
                     total++;
                 }
                 resp.getWriter().print(total + "_messages_delivered");
             } else {
-                if (!dbManager.machineExists(target)) {
+                if (!VMDataAccessService.machineExists(target)) {
                     resp.getWriter().print("wrong_target");
                 } else {
-                    dbManager.insertAdminMessage(message, target);
+                    VMDataAccessService.insertAdminMessage(message, target);
                     resp.getWriter().print("message_delivered");
                 }
             }
