@@ -1,14 +1,12 @@
 package dev.donhk.actor;
 
 import akka.actor.AbstractActor;
+import dev.donhk.actor.impl.DelDanglingNets;
+import dev.donhk.actor.impl.ListMachines;
 import dev.donhk.helpers.Constants;
-import dev.donhk.pojos.MachineMeta;
-import dev.donhk.vbox.MetaExtractor;
 import dev.donhk.vbox.VBoxManager;
 import org.tinylog.Logger;
 import org.virtualbox_7_1.VirtualBoxManager;
-
-import java.util.List;
 
 public class VBoxActor extends AbstractActor {
 
@@ -41,13 +39,8 @@ public class VBoxActor extends AbstractActor {
                     System.out.println("Received2: " + msg.name() + " " + msg.age());
                     getSender().tell(new VBoxMessage.PingResponse2("a", 1), getSelf());
                 })
-                .match(VBoxMessage.ListMachinesRequest.class, request -> {
-                    Logger.info("ListMachinesRequest");
-                    final MetaExtractor metaExtractor = new MetaExtractor(this.boxManager);
-                    final List<MachineMeta> machines = metaExtractor.genMetaInfo();
-                    final VBoxMessage.ListMachinesResponse response = new VBoxMessage.ListMachinesResponse(machines);
-                    getSender().tell(response, getSelf());
-                })
+                .match(VBoxMessage.ListMachinesRequest.class, request -> getSender().tell(new ListMachines(this.boxManager).dispatch(), getSelf()))
+                .match(VBoxMessage.DelDanglingNetsRequest.class, request -> getSender().tell(new DelDanglingNets(this.boxManager, request.activeMachineRows()).dispatch(), getSelf()))
                 .build();
     }
 

@@ -1,11 +1,10 @@
-package dev.donhk.web.controlls;
+package dev.donhk.web.handler;
 
 import dev.donhk.helpers.Utils;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
 import org.eclipse.jetty.http.HttpStatus;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,25 +12,24 @@ import java.util.Map;
 import static dev.donhk.system.VMMetadataSynchronizer.instructions;
 import static dev.donhk.vbox.Constants.NA;
 
-public class ReloadVMsMeta extends HttpServlet {
+public class ReloadVMsMeta implements Handler {
 
-    private final Map<String, String> variables = new HashMap<>();
     private String secret = null;
-    private String status = "&#127814;";
+    private String status = "&#127814;"; // 🍆
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    public void handle(Context ctx) throws Exception {
+        Map<String, String> variables = new HashMap<>();
+
         if (secret == null) {
             secret = String.valueOf(System.currentTimeMillis());
         }
 
-        if (req.getParameter("update") != null && req.getParameter("update").equals(secret)) {
+        if ("true".equals(ctx.queryParam("update")) && secret.equals(ctx.queryParam("update"))) {
             try {
                 instructions.put(new Object());
-                //refresh the key
                 secret = String.valueOf(System.currentTimeMillis());
-                //change the status
-                status = "&#128571;";
+                status = "&#128571;"; // 🐓
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -44,27 +42,29 @@ public class ReloadVMsMeta extends HttpServlet {
         variables.put("status", status);
         variables.put("secret", secret);
 
-        //kind of cached result
         String content = loadResource("public/views/Layout.html");
-        byte[] response = content.getBytes();
-        resp.setStatus(HttpStatus.OK_200);
-        resp.getWriter().println(new String(response));
+        String finalHtml = process(content, variables);
+
+        ctx.status(HttpStatus.OK_200)
+                .header("engine", "Sandboxer")
+                .contentType("text/html")
+                .result(finalHtml);
+
+        // Reset status for next render
         status = "&#127814;";
     }
 
-    private String loadResource(String viewName) {
+    private String loadResource(String path) {
         try {
-            return process(Utils.resource2txt(viewName));
+            return Utils.resource2txt(path);
         } catch (IOException e) {
             return NA;
         }
     }
 
-    private String process(String source) {
+    private String process(String source, Map<String, String> variables) {
         for (Map.Entry<String, String> entry : variables.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            source = source.replaceAll("\\{" + key + "}", value);
+            source = source.replaceAll("\\{" + entry.getKey() + "}", entry.getValue());
         }
         return source;
     }

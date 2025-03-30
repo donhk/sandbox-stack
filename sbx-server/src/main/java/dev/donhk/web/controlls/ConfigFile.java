@@ -12,15 +12,15 @@ public class ConfigFile extends Controller {
     private final VMDataAccessService VMDataAccessService;
 
     public ConfigFile(VMDataAccessService VMDataAccessService) {
-        super("web/views/Layout.html");
+        super("public/views/Layout.html");
         this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
     public void addVariables() {
-        variables.put("pure-min", "<style>" + loadResource("web/css/layouts/pure-min.css") + "</style>");
-        variables.put("side-menu", "<style>" + loadResource("web/css/layouts/side-menu.css") + "</style>");
-        variables.put("ui-js", "<script>" + loadResource("web/js/ui.js") + "</script>");
+        variables.put("pure-min", "<style>" + loadResource("public/layouts/pure-min.css") + "</style>");
+        variables.put("side-menu", "<style>" + loadResource("public/layouts/side-menu.css") + "</style>");
+        variables.put("ui-js", "<script>" + loadResource("public/js/ui.js") + "</script>");
         try {
             DigestRow row = VMDataAccessService.getDigestRow();
             variables.put("config-file", "<pre>" + Utils.base64Decode(row.content) + "</pre>");
@@ -29,6 +29,6 @@ public class ConfigFile extends Controller {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        variables.put("main-content", loadResource("web/views/ConfigFilePage.html"));
+        variables.put("main-content", loadResource("public/views/ConfigFilePage.html"));
     }
 }

@@ -4,7 +4,7 @@ import dev.donhk.database.DatabaseServer;
 import dev.donhk.helpers.Utils;
 import dev.donhk.sbx.ClientConnection;
 import dev.donhk.system.Postman;
-import dev.donhk.system.SystemCleaner;
+import dev.donhk.system.VBoxNetsGarbageCollector;
 import dev.donhk.system.VMMetadataSynchronizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +101,7 @@ public class SandboxServer {
 
     private void systemTasks(Connection conn) {
         VMMetadataSynchronizer.newInstance(conn, boxManager);
-        SystemCleaner.newInstance(conn, boxManager, clientConnections);
+        VBoxNetsGarbageCollector.newInstance(conn, boxManager, clientConnections);
         Postman.newInstance(conn);
     }
 
