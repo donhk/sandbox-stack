@@ -1,6 +1,6 @@
 package dev.donhk.system;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.sbx.ClientConnection;
 import dev.donhk.vbox.VBoxManager;
@@ -11,7 +11,6 @@ import org.virtualbox_6_1.VirtualBoxManager;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,13 +22,13 @@ public class SystemCleaner {
 
     private final Logger logger = LoggerFactory.getLogger(SystemCleaner.class);
     private final VBoxManager vBoxManager;
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
     private final Pattern natShape = Pattern.compile("\\w+_\\w+");
     private final List<ClientConnection> clientConnections;
 
     private SystemCleaner(Connection conn, VirtualBoxManager boxManager, List<ClientConnection> clientConnections) {
         this.vBoxManager = new VBoxManager(boxManager);
-        this.dbManager = new DBManager(conn);
+        this.VMDataAccessService = new VMDataAccessService(conn);
         this.clientConnections = clientConnections;
     }
 
@@ -56,7 +55,7 @@ public class SystemCleaner {
             }
             //yes, then check if it is in use
             try {
-                final List<ActiveMachineRow> machines = dbManager.getActiveMachines();
+                final List<ActiveMachineRow> machines = VMDataAccessService.getActiveMachines();
                 if (checkIfNetworkIsFree(netName, machines)) {
                     dropNetwork(netName);
                 }
@@ -89,7 +88,7 @@ public class SystemCleaner {
     private void dropNetwork(String netName) throws Exception {
         //this network is not longer in use
         logger.info("Purging dangling network " + netName);
-        dbManager.dropNATNetwork(netName);
+        VMDataAccessService.dropNATNetwork(netName);
         vBoxManager.removeNatNetwork(netName);
     }
 }

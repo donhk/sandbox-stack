@@ -1,6 +1,6 @@
 package dev.donhk.web.sbxControlls;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -9,10 +9,10 @@ import java.sql.SQLException;
 import java.util.Map;
 
 public class VmsInfo implements WebCmd {
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
 
-    public VmsInfo(DBManager dbManager) {
-        this.dbManager = dbManager;
+    public VmsInfo(VMDataAccessService VMDataAccessService) {
+        this.VMDataAccessService = VMDataAccessService;
     }
 
     @Override
@@ -21,9 +21,9 @@ public class VmsInfo implements WebCmd {
         //kill the specified vm
         Map<String, String> m;
         try {
-            m = dbManager.getMetaDigestInfo();
+            m = VMDataAccessService.getMetaDigestInfo();
             //update the history of updates dispatched
-            dbManager.registerOperation(vm + "-update");
+            VMDataAccessService.registerOperation(vm + "-update");
         } catch (SQLException e) {
             resp.getWriter().print("internal_error_call_support");
             return;

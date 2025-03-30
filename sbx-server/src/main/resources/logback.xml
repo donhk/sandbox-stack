@@ -45,7 +45,7 @@
     </logger>
 
     <!-- DBManager -->
-    <logger name="dev.donhk.database.DBManager" additivity="true">
+    <logger name="dev.donhk.database.VMDataAccessService" additivity="true">
         <level value="info"/>
         <appender-ref ref="APP_LOG"/>
         <appender-ref ref="STDOUT"/>
@@ -101,7 +101,7 @@
     </logger>
 
     <!-- HttpDaemon -->
-    <logger name="dev.donhk.system.SystemWorker" additivity="true">
+    <logger name="dev.donhk.system.VMMetadataSynchronizer" additivity="true">
         <level value="info"/>
         <appender-ref ref="APP_LOG"/>
         <appender-ref ref="STDOUT"/>

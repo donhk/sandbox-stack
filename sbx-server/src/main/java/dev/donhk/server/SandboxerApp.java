@@ -7,11 +7,11 @@ import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxActor;
 import dev.donhk.database.DatabaseServer;
 import dev.donhk.helpers.Config;
+import dev.donhk.helpers.LoggingInitializer;
 import dev.donhk.system.Postman;
 import dev.donhk.system.SystemCleaner;
-import dev.donhk.system.SystemWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dev.donhk.system.VMMetadataSynchronizer;
+import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -23,7 +23,10 @@ import java.sql.SQLException;
  */
 public class SandboxerApp {
 
-    private final Logger logger = LoggerFactory.getLogger(SandboxerApp.class);
+    static {
+        LoggingInitializer.init();
+    }
+
     private final Config config;
     private final ActorRef vboxActor;
 
@@ -44,7 +47,7 @@ public class SandboxerApp {
         // start the database server
         final HikariDataSource dataSource = this.startDatabaseService();
 
-        logger.info("Start the system level threads");
+        Logger.info("Start the system level threads");
         startSystemWorkers(dataSource);
 
     }
@@ -67,14 +70,14 @@ public class SandboxerApp {
      */
     private HikariDataSource startDatabaseService() throws SQLException, IOException, InterruptedException {
         final DatabaseServer databaseServer = new DatabaseServer(this.config);
-        logger.info("Start database service");
+        Logger.info("Start database service");
         databaseServer.startServer();
         return databaseServer.getDataSource();
     }
 
     private void startSystemWorkers(HikariDataSource conn) {
-        SystemWorker.newInstance(conn, vboxActor);
+        VMMetadataSynchronizer.newInstance(conn, vboxActor, config);
         SystemCleaner.newInstance(conn, boxManager, clientConnections);
-        Postman.newInstance(conn);
+        Postman.newInstance(conn, config);
     }
 }

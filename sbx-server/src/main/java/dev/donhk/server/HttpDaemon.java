@@ -1,6 +1,6 @@
 package dev.donhk.server;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 import dev.donhk.sbx.ClientConnection;
 import dev.donhk.web.core.WebContextsHandler;
 import org.eclipse.jetty.server.Server;
@@ -18,13 +18,13 @@ public class HttpDaemon {
     private final Logger logger = LoggerFactory.getLogger(HttpDaemon.class);
     private final int port;
     private final String address;
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
     private Server server = null;
     private final List<ClientConnection> clientConnections;
 
     public HttpDaemon(int port, Connection conn, List<ClientConnection> clientConnections) {
         this.port = port;
-        this.dbManager = new DBManager(conn);
+        this.VMDataAccessService = new VMDataAccessService(conn);
         this.clientConnections = clientConnections;
         address = "http://localhost:" + port;
     }
@@ -34,7 +34,7 @@ public class HttpDaemon {
         if (server == null) {
             server = new Server(port);
             final ServletContextHandler handler = new ServletContextHandler(server, "/");
-            final WebContextsHandler webContextsHandler = new WebContextsHandler(dbManager, clientConnections);
+            final WebContextsHandler webContextsHandler = new WebContextsHandler(VMDataAccessService, clientConnections);
 
             logger.info("Binding contexts");
             //bind web contexts

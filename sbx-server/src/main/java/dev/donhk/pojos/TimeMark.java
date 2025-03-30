@@ -1,6 +1,6 @@
 package dev.donhk.pojos;
 
-import dev.donhk.database.DBManager;
+import dev.donhk.database.VMDataAccessService;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -9,11 +9,11 @@ import java.time.temporal.ChronoUnit;
 public class TimeMark {
     private LocalDateTime time = LocalDateTime.now();
     private final LocalDateTime startTime = LocalDateTime.now();
-    private final DBManager dbManager;
+    private final VMDataAccessService VMDataAccessService;
     private final String name;
 
-    public TimeMark(DBManager dbManager, String name) {
-        this.dbManager = dbManager;
+    public TimeMark(VMDataAccessService VMDataAccessService, String name) {
+        this.VMDataAccessService = VMDataAccessService;
         this.name = name;
     }
 
@@ -32,7 +32,7 @@ public class TimeMark {
     }
 
     private void refreshTime() {
-        final Timestamp ts = dbManager.getMachinePoll(name);
+        final Timestamp ts = VMDataAccessService.getMachinePoll(name);
         if (ts == null) {
             //this should never happen
             time = LocalDateTime.MIN;
