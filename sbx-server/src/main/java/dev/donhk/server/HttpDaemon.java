@@ -1,68 +1,54 @@
 package dev.donhk.server;
 
+import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.database.VMDataAccessService;
+import dev.donhk.helpers.Config;
 import dev.donhk.sbx.ClientConnection;
-import dev.donhk.web.core.WebContextsHandler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dev.donhk.web.controlls.VMsMeta;
+import dev.donhk.web.handler.*;
+import io.javalin.Javalin;
+import io.javalin.http.staticfiles.Location;
+import org.tinylog.Logger;
 
-import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
 public class HttpDaemon {
 
-    private final Logger logger = LoggerFactory.getLogger(HttpDaemon.class);
     private final int port;
     private final String address;
-    private final VMDataAccessService VMDataAccessService;
-    private Server server = null;
+    private final VMDataAccessService vmDataAccessService;
     private final List<ClientConnection> clientConnections;
 
-    public HttpDaemon(int port, Connection conn, List<ClientConnection> clientConnections) {
-        this.port = port;
-        this.VMDataAccessService = new VMDataAccessService(conn);
+    public HttpDaemon(Config config, HikariDataSource conn, List<ClientConnection> clientConnections) {
+        this.port = config.sbxServiceUIPort;
+        this.vmDataAccessService = new VMDataAccessService(conn, config);
         this.clientConnections = clientConnections;
         address = "http://localhost:" + port;
     }
 
     public void startServer() {
-        logger.info("Creating instance of HttpServer ");
-        if (server == null) {
-            server = new Server(port);
-            final ServletContextHandler handler = new ServletContextHandler(server, "/");
-            final WebContextsHandler webContextsHandler = new WebContextsHandler(VMDataAccessService, clientConnections);
+        Logger.info("Creating instance of HttpServer ");
+        Javalin app = Javalin.create(config -> {
+            config.staticFiles.add(staticFileConfig -> {
+                staticFileConfig.hostedPath = "/";
+                staticFileConfig.directory = "/public";
+                staticFileConfig.location = Location.CLASSPATH;
+            });
+        }).start(port);
 
-            logger.info("Binding contexts");
-            //bind web contexts
-            for (Map.Entry<String, ServletHolder> e : webContextsHandler.getContexts().entrySet()) {
-                handler.addServlet(e.getValue(), e.getKey());
-                logger.info("new Context: " + e.getKey());
-            }
+        Logger.info("web server started at: {}", address);
 
-            logger.info("Starting server");
-            try {
-                server.start();
-            } catch (Exception e) {
-                logger.error(e.getMessage(), e);
-            }
-            logger.info("web server started at: " + address);
-        } else {
-            logger.info("The web server is already running at: " + address);
-        }
+        // REST API endpoint
+        app.get("/api/hello", ctx -> ctx.json(Map.of("message", "Hello from REST API!")));
 
-    }
+        // Default route (optional)
+        app.get("/", ctx -> new ActiveMachines(vmDataAccessService));
+        app.get("/meta", ctx -> new VMsMeta(vmDataAccessService));
+        app.get("/config", ctx -> new ConfigFile(vmDataAccessService));
+        app.get("/stats", ctx -> new UsageStats(vmDataAccessService));
+        app.get("/reload", ctx -> new ReloadVMsMeta());
+        app.get("/sbx", ctx -> new SbxControl(vmDataAccessService, clientConnections));
 
-    public void stopServer() {
-        logger.info("Stopping HttpServer " + address);
-        if (server != null) {
-            try {
-                server.stop();
-            } catch (Exception ignored) {
-            }
-        }
     }
 }

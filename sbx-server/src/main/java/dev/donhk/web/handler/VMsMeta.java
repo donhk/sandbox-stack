@@ -1,30 +1,37 @@
-package dev.donhk.web.controlls;
+package dev.donhk.web.handler;
 
 import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.MachineMeta;
-import dev.donhk.web.core.Controller;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import org.eclipse.jetty.http.HttpStatus;
 
-import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class VMsMeta extends Controller {
+public class VMsMeta implements Handler {
 
     private final VMDataAccessService vmDataAccessService;
 
     public VMsMeta(VMDataAccessService vmDataAccessService) {
-        super("public/views/Layout.html");
         this.vmDataAccessService = vmDataAccessService;
     }
 
     @Override
-    public void addVariables() {
-        variables.put("pure-min", "<style>" + loadResource("public/layouts/pure-min.css") + "</style>");
-        variables.put("side-menu", "<style>" + loadResource("public/layouts/side-menu.css") + "</style>");
-        variables.put("ui-js", "<script>" + loadResource("public/js/ui.js") + "</script>");
+    public void handle(Context ctx) {
+        Map<String, String> variables = new HashMap<>();
+
+        // Inline resources
+        variables.put("pure-min", "<style>" + Renderer.loadResource("public/layouts/pure-min.css") + "</style>");
+        variables.put("side-menu", "<style>" + Renderer.loadResource("public/layouts/side-menu.css") + "</style>");
+        variables.put("ui-js", "<script>" + Renderer.loadResource("public/js/ui.js") + "</script>");
 
         try {
             List<MachineMeta> info = vmDataAccessService.getMachinesMetaInfo();
             StringBuilder sb = new StringBuilder();
+
             for (MachineMeta meta : info) {
                 sb.append("<tr>");
                 sb.append("  <td>").append(meta.machinePrefix).append("</td>");
@@ -35,19 +42,32 @@ public class VMsMeta extends Controller {
                 sb.append("  <td>").append(meta.user).append("</td>");
                 sb.append("  <td>").append(meta.password).append("</td>");
                 sb.append("  <td><pre>").append(meta.home.replace("\\\\", "\\\\\\\\")).append("</pre></td>");
+
                 if (meta.comments.length() > 20) {
                     String part = meta.comments.substring(0, 15) + "...";
                     sb.append("  <td><pre>").append(part).append("</pre></td>");
-                } else if (meta.comments.length() == 0) {
+                } else if (meta.comments.isEmpty()) {
                     sb.append("  <td>").append("&#127820;").append("</td>");
+                } else {
+                    sb.append("  <td><pre>").append(meta.comments).append("</pre></td>");
                 }
+
                 sb.append("</tr>");
             }
+
             variables.put("rows", sb.toString());
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            variables.put("rows", "<tr><td colspan=\"9\">Error loading data</td></tr>");
         }
 
-        variables.put("main-content", loadResource("public/views/VMsMetaPage.html"));
+        variables.put("main-content", Renderer.loadResource("public/views/VMsMetaPage.html"));
+        String layoutHtml = Renderer.loadResource("public/views/Layout.html");
+        String resultHtml = Renderer.processTemplate(layoutHtml, variables);
+
+        ctx.status(HttpStatus.OK_200)
+                .header("engine", "Sandboxer")
+                .contentType("text/html")
+                .result(resultHtml);
     }
 }

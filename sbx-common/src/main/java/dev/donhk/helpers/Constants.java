@@ -1,6 +1,7 @@
 package dev.donhk.helpers;
 
 public class Constants {
+    public static final String SBX_VERSION = "1.5";
     public static final String INVALID_ARG = "INVALID_ARG";
     public static final String INVALID_COMMAND = "INVALID_COMMAND";
     public static final String MY_NAME = "MY_NAME"; //MY_NAME|name

@@ -8,14 +8,17 @@ import dev.donhk.actor.VBoxActor;
 import dev.donhk.database.DatabaseServer;
 import dev.donhk.helpers.Config;
 import dev.donhk.helpers.LoggingInitializer;
+import dev.donhk.sbx.ClientConnection;
 import dev.donhk.system.Postman;
-import dev.donhk.system.SystemCleaner;
+import dev.donhk.system.VBoxNetsGarbageCollector;
 import dev.donhk.system.VMMetadataSynchronizer;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main class of the sandboxer service
@@ -29,6 +32,8 @@ public class SandboxerApp {
 
     private final Config config;
     private final ActorRef vboxActor;
+    //clients pool
+    private final List<ClientConnection> clientConnections = new ArrayList<>();
 
     private SandboxerApp(Config config) {
         this.config = config;
@@ -49,7 +54,13 @@ public class SandboxerApp {
 
         Logger.info("Start the system level threads");
         startSystemWorkers(dataSource);
+        Logger.info("Start the web interface");
+        startHttpEndpoints(dataSource);
+    }
 
+    private void startHttpEndpoints(HikariDataSource conn) {
+        final HttpDaemon http = new HttpDaemon(this.config, conn, clientConnections);
+        http.startServer();
     }
 
     /**
@@ -77,7 +88,7 @@ public class SandboxerApp {
 
     private void startSystemWorkers(HikariDataSource conn) {
         VMMetadataSynchronizer.newInstance(conn, vboxActor, config);
-        SystemCleaner.newInstance(conn, boxManager, clientConnections);
+        VBoxNetsGarbageCollector.newInstance(conn, vboxActor, config, clientConnections);
         Postman.newInstance(conn, config);
     }
 }

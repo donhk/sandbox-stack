@@ -1,5 +1,6 @@
 package dev.donhk.actor;
 
+import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.pojos.MachineMeta;
 
 import java.util.List;
@@ -21,5 +22,11 @@ public final class VBoxMessage {
     }
 
     public record ListMachinesResponse(List<MachineMeta> machineMetas) {
+    }
+
+    public record DelDanglingNetsRequest(List<ActiveMachineRow> activeMachineRows) {
+    }
+
+    public record DelDanglingNetsResponse(List<String> unusedNetworks) {
     }
 }
