@@ -5,7 +5,7 @@ import dev.donhk.pojos.MachineMeta;
 import dev.donhk.web.Renderer;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import org.eclipse.jetty.http.HttpStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +20,7 @@ public class VMsMeta implements Handler {
     }
 
     @Override
-    public void handle(Context ctx) {
+    public void handle(@NotNull Context ctx) {
         Map<String, String> variables = new HashMap<>();
 
         // Inline resources
@@ -65,9 +65,6 @@ public class VMsMeta implements Handler {
         String layoutHtml = Renderer.loadResource("public/views/Layout.html");
         String resultHtml = Renderer.processTemplate(layoutHtml, variables);
 
-        ctx.status(HttpStatus.OK_200)
-                .header("engine", "Sandboxer")
-                .contentType("text/html")
-                .result(resultHtml);
+        Renderer.addHeaders(resultHtml, ctx);
     }
 }

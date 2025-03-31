@@ -4,7 +4,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.database.VMDataAccessService;
 import dev.donhk.helpers.Config;
 import dev.donhk.sbx.ClientConnection;
-import dev.donhk.web.controlls.VMsMeta;
 import dev.donhk.web.handler.*;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -29,13 +28,14 @@ public class HttpDaemon {
 
     public void startServer() {
         Logger.info("Creating instance of HttpServer ");
-        Javalin app = Javalin.create(config -> {
-            config.staticFiles.add(staticFileConfig -> {
-                staticFileConfig.hostedPath = "/";
-                staticFileConfig.directory = "/public";
-                staticFileConfig.location = Location.CLASSPATH;
-            });
-        }).start(port);
+        Javalin app = Javalin.create(config ->
+                config.staticFiles.add(
+                        staticFileConfig -> {
+                            staticFileConfig.hostedPath = "/";
+                            staticFileConfig.directory = "/public";
+                            staticFileConfig.location = Location.CLASSPATH;
+                        }
+                )).start(port);
 
         Logger.info("web server started at: {}", address);
 
@@ -43,12 +43,12 @@ public class HttpDaemon {
         app.get("/api/hello", ctx -> ctx.json(Map.of("message", "Hello from REST API!")));
 
         // Default route (optional)
-        app.get("/", ctx -> new ActiveMachines(vmDataAccessService));
-        app.get("/meta", ctx -> new VMsMeta(vmDataAccessService));
-        app.get("/config", ctx -> new ConfigFile(vmDataAccessService));
-        app.get("/stats", ctx -> new UsageStats(vmDataAccessService));
-        app.get("/reload", ctx -> new ReloadVMsMeta());
-        app.get("/sbx", ctx -> new SbxControl(vmDataAccessService, clientConnections));
+        app.get("/", new ActiveMachines(vmDataAccessService));
+        app.get("/meta", new VMsMeta(vmDataAccessService));
+        app.get("/config", new ConfigFile(vmDataAccessService));
+        app.get("/stats", new UsageStats(vmDataAccessService));
+        app.get("/reload", new ReloadVMsMeta());
+        app.get("/sbx", new SbxControl(vmDataAccessService, clientConnections));
 
     }
 }
