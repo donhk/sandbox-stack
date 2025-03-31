@@ -1,9 +1,10 @@
 package dev.donhk.web.handler;
 
 import dev.donhk.helpers.Utils;
+import dev.donhk.web.Renderer;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import org.eclipse.jetty.http.HttpStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,7 +19,7 @@ public class ReloadVMsMeta implements Handler {
     private String status = "&#127814;"; // 🍆
 
     @Override
-    public void handle(Context ctx) throws Exception {
+    public void handle(@NotNull Context ctx) {
         Map<String, String> variables = new HashMap<>();
 
         if (secret == null) {
@@ -45,10 +46,7 @@ public class ReloadVMsMeta implements Handler {
         String content = loadResource("public/views/Layout.html");
         String finalHtml = process(content, variables);
 
-        ctx.status(HttpStatus.OK_200)
-                .header("engine", "Sandboxer")
-                .contentType("text/html")
-                .result(finalHtml);
+        Renderer.addHeaders(finalHtml, ctx);
 
         // Reset status for next render
         status = "&#127814;";
