@@ -2,17 +2,18 @@ package dev.donhk.web.sbxControlls;
 
 import dev.donhk.pojos.Tasks;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
+
 import java.io.IOException;
 
 public class Help implements WebCmd {
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    public void execute(Context ctx) throws IOException {
         final StringBuilder sb = new StringBuilder();
-        for (Tasks tasks1 : Tasks.values()) {
-            sb.append(tasks1.getHelp()).append("\n");
+        for (Tasks tasks : Tasks.values()) {
+            sb.append(tasks.getHelp()).append("\n");
         }
-        resp.getWriter().print(sb.toString());
+        Renderer.addHeaders(sb.toString(), ctx);
     }
 }

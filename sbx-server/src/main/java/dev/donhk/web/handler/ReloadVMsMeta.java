@@ -5,6 +5,7 @@ import dev.donhk.web.Renderer;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class ReloadVMsMeta implements Handler {
                 secret = String.valueOf(System.currentTimeMillis());
                 status = "&#128571;"; // 🐓
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Logger.error("interrupted exception", e);
             }
         }
 
@@ -56,6 +57,7 @@ public class ReloadVMsMeta implements Handler {
         try {
             return Utils.resource2txt(path);
         } catch (IOException e) {
+            Logger.error("error loading resource", e);
             return NA;
         }
     }

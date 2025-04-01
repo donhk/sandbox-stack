@@ -1,10 +1,11 @@
 package dev.donhk.web.sbxControlls;
 
 import dev.donhk.sbx.ClientConnection;
+import dev.donhk.web.Renderer;
 import org.eclipse.jetty.util.UrlEncoded;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import io.javalin.http.Context;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -18,22 +19,23 @@ public class KillVM implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        if (req.getParameter("vm") == null) {
-            resp.getWriter().print("Missing parameter vm");
+    public void execute(Context ctx) throws IOException {
+        final String rawVm = ctx.req().getParameter("vm");
+        if (rawVm == null) {
+            Renderer.addHeaders("Missing parameter vm", ctx);
             return;
         }
 
-        final String vm = UrlEncoded.decodeString(req.getParameter("vm")).trim();
+        final String vm = UrlEncoded.decodeString(rawVm).trim();
 
-        //kill the specified vm
+        //kill the specified rawVm
         for (ClientConnection conn : clientConnections) {
             if (conn.getName().equals(vm)) {
                 conn.abortAndClean(ADMIN_KILL);
-                resp.getWriter().print("vm " + vm + " successfully destroyed");
+                Renderer.addHeaders("vm " + vm + " successfully destroyed", ctx);
                 return;
             }
         }
-        resp.getWriter().print("vm_not_found");
+        Renderer.addHeaders("vm_not_found", ctx);
     }
 }

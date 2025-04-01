@@ -2,8 +2,9 @@ package dev.donhk.web.sbxControlls;
 
 import dev.donhk.database.VMDataAccessService;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -15,12 +16,12 @@ public class VmsRunning implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    public void execute(Context ctx) throws IOException {
         //respond how many vms are running
         try {
-            resp.getWriter().print("{\"active_vms\":\"" + VMDataAccessService.getActiveMachines().size() + "\"}");
+            Renderer.addHeaders("{\"active_vms\":\"" + VMDataAccessService.getActiveMachines().size() + "\"}", ctx);
         } catch (SQLException e) {
-            resp.getWriter().print("{\"active_vms\":\"-1\"}");
+            Renderer.addHeaders("{\"active_vms\":\"-1\"}", ctx);
         }
 
     }

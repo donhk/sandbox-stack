@@ -2,10 +2,11 @@ package dev.donhk.web.sbxControlls;
 
 import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.ActiveMachineRow;
+import dev.donhk.web.Renderer;
+
+import io.javalin.http.Context;
 import org.eclipse.jetty.util.UrlEncoded;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
@@ -19,30 +20,30 @@ public class PostService implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        final String target = req.getParameter("target");
-        final String message = UrlEncoded.decodeString(req.getParameter("message"));
+    public void execute(Context ctx) throws IOException {
+        final String target = ctx.req().getParameter("target");
+        final String message = ctx.req().getParameter("message");
 
         if (target == null || message == null) {
-            resp.getWriter().print("wrong_message_format");
+            Renderer.addHeaders("wrong_message_format", ctx);
             return;
         }
-
+        final String decMessage = UrlEncoded.decodeString(message);
         try {
             if (target.equals("all_vms")) {
                 final List<ActiveMachineRow> activeMachineRows = VMDataAccessService.getActiveMachines();
                 int total = 0;
                 for (ActiveMachineRow row : activeMachineRows) {
-                    VMDataAccessService.insertAdminMessage(message, row.name);
+                    VMDataAccessService.insertAdminMessage(decMessage, row.name);
                     total++;
                 }
-                resp.getWriter().print(total + "_messages_delivered");
+                Renderer.addHeaders(total + "_messages_delivered", ctx);
             } else {
                 if (!VMDataAccessService.machineExists(target)) {
-                    resp.getWriter().print("wrong_target");
+                    Renderer.addHeaders("wrong_target", ctx);
                 } else {
-                    VMDataAccessService.insertAdminMessage(message, target);
-                    resp.getWriter().print("message_delivered");
+                    VMDataAccessService.insertAdminMessage(decMessage, target);
+                    Renderer.addHeaders("message_delivered", ctx);
                 }
             }
         } catch (SQLException e) {

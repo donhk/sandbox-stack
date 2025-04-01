@@ -4,8 +4,7 @@ package dev.donhk.database;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.helpers.Config;
 import dev.donhk.pojos.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tinylog.Logger;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -13,7 +12,6 @@ import java.util.*;
 
 public class VMDataAccessService {
 
-    private final Logger logger = LoggerFactory.getLogger(VMDataAccessService.class);
     private final HikariDataSource conn;
     private final Config config;
 
@@ -891,7 +889,7 @@ public class VMDataAccessService {
             ps.setString(2, message);
             ps.executeUpdate();
         } catch (SQLException e) {
-            logger.warn("error", e);
+            Logger.warn("error", e);
         }
     }
 }

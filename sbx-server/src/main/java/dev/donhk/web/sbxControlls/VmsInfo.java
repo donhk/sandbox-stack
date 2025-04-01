@@ -2,8 +2,10 @@ package dev.donhk.web.sbxControlls;
 
 import dev.donhk.database.VMDataAccessService;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
+import org.eclipse.jetty.util.UrlEncoded;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
@@ -16,8 +18,9 @@ public class VmsInfo implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        final String vm = req.getParameter("vm");
+    public void execute(Context ctx) throws IOException {
+        final String rawVm = ctx.req().getParameter("vm");
+        final String vm = UrlEncoded.decodeString(rawVm).trim();
         //kill the specified vm
         Map<String, String> m;
         try {
@@ -25,11 +28,11 @@ public class VmsInfo implements WebCmd {
             //update the history of updates dispatched
             VMDataAccessService.registerOperation(vm + "-update");
         } catch (SQLException e) {
-            resp.getWriter().print("internal_error_call_support");
+            Renderer.addHeaders("internal_error_call_support", ctx);
             return;
         }
         final Map.Entry<String, String> entry = m.entrySet().iterator().next();
         final String content = entry.getValue();
-        resp.getWriter().print(content);
+        Renderer.addHeaders(content, ctx);
     }
 }

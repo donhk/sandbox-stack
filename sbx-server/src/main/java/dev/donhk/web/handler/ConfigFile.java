@@ -7,6 +7,7 @@ import dev.donhk.web.Renderer;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
+import org.tinylog.Logger;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -34,7 +35,7 @@ public class ConfigFile implements Handler {
             variables.put("created", row.created);
             variables.put("digest", row.digest);
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.error("sql error", e);
             variables.put("config-file", "<pre>Error loading config</pre>");
             variables.put("created", "N/A");
             variables.put("digest", "N/A");
