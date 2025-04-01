@@ -5,9 +5,7 @@ import dev.donhk.helpers.Utils;
 import dev.donhk.pojos.*;
 import dev.donhk.vbox.LaunchMode;
 import dev.donhk.vbox.VBoxManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.virtualbox_6_1.VirtualBoxManager;
+import org.tinylog.Logger;
 
 import java.io.*;
 import java.net.Socket;
@@ -25,7 +23,6 @@ import static dev.donhk.helpers.Constants.*;
 
 public class ClientConnection {
 
-    private final Logger logger = LoggerFactory.getLogger(ClientConnection.class);
     private final Socket socket;
     private String name = "GUEST";
     private Thread reader = null;
@@ -75,15 +72,15 @@ public class ClientConnection {
             try {
                 String line;
                 while ((line = input.readLine()) != null) {
-                    logger.info(name + " says " + line);
+                    Logger.info(name + " says " + line);
                     try {
                         processCmd(line);
                     } catch (Exception e) {
-                        logger.warn("Unexpected exception: " + e.getMessage());
+                        Logger.warn("Unexpected exception: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
-                logger.info("Connection finished: " + name);
+                Logger.info("Connection finished: " + name);
             } catch (Exception e) {
                 //ignore
             }
@@ -195,11 +192,11 @@ public class ClientConnection {
             configurePolling();
 
         } catch (SQLException e) {
-            logger.warn("sql exception " + e.getMessage());
+            Logger.warn("sql exception " + e.getMessage());
             output.println(RUNTIME_ERR);
             abortAndClean(OPERATION_EXCEPTION);
         } catch (Exception e) {
-            logger.error("There was a problem establishing polling configuration, abort and clean " + name, e);
+            Logger.error("There was a problem establishing polling configuration, abort and clean " + name, e);
             output.println(RUNTIME_ERR);
             abortAndClean(OPERATION_EXCEPTION);
         }
@@ -212,11 +209,11 @@ public class ClientConnection {
             ports.put("ssh", sshPort);
             VMDataAccessService.updatePort(sshPort, HostPortStatus.BUSY);
             final String sshPortStatus = VMDataAccessService.getPortStatus(sshPort);
-            logger.info("ssh port " + sshPort + " marked as " + sshPortStatus + " for " + name);
+            Logger.info("ssh port " + sshPort + " marked as " + sshPortStatus + " for " + name);
 
             //register machine ssh port
             VMDataAccessService.insertRule(name, "ssh" + sshPort, sshPort, 22);
-            logger.info(name + " port ssh[" + sshPort + "]");
+            Logger.info(name + " port ssh[" + sshPort + "]");
         }
         lastClientContact = new TimeMark(VMDataAccessService, name);
         //update the machine time for the very first time
@@ -225,9 +222,9 @@ public class ClientConnection {
         poller = Executors.newSingleThreadScheduledExecutor();
         poller.scheduleAtFixedRate(() -> {
             final long secondsLastUpdate = lastClientContact.secondsSinceLastUpdate();
-            //logger.info(name + "last update was " + secondsLastUpdate + " seconds ago [limit: " + MAX_TIME_WITHOUT_RESPONSE + " seconds]");
+            //Logger.info(name + "last update was " + secondsLastUpdate + " seconds ago [limit: " + MAX_TIME_WITHOUT_RESPONSE + " seconds]");
             if (secondsLastUpdate > MAX_TIME_WITHOUT_RESPONSE) {
-                logger.info(name + " has not responded in " + secondsLastUpdate + " seconds, [limit: " + MAX_TIME_WITHOUT_RESPONSE + " seconds]. stopping");
+                Logger.info(name + " has not responded in " + secondsLastUpdate + " seconds, [limit: " + MAX_TIME_WITHOUT_RESPONSE + " seconds]. stopping");
                 abortAndClean(RESPONSE_TIMEOUT);
             }
             //if this test takes more than DEFAULT_EXEC_TIME_LIMIT, it will be aborted
@@ -239,7 +236,7 @@ public class ClientConnection {
             }
             final long minSinceStart = lastClientContact.minutesSinceStart();
             if (minSinceStart > DEFAULT_EXEC_TIME_LIMIT) {
-                logger.info(name + " exceed its execution time, it will be destroyed after " + minSinceStart + " minutes");
+                Logger.info(name + " exceed its execution time, it will be destroyed after " + minSinceStart + " minutes");
                 //we will let the client know that this execution was aborted due to the time exceed
                 alive = false;
                 //harakiri
@@ -267,27 +264,27 @@ public class ClientConnection {
                 String snapshot = parts[2];
                 String natNetwork = parts[3];
                 //review if this request is valid
-                logger.info(name + " requested to create a clone from: " + seedName + " " + snapshot);
+                Logger.info(name + " requested to create a clone from: " + seedName + " " + snapshot);
                 if (!VMDataAccessService.machineAndSnapExist(seedName, snapshot)) {
                     output.println(INVALID_ARG);
                     throw new Exception("Invalid machine name or snapshot name [" + name + "]");
                 }
-                logger.info(name + " metadata provided is correct, a clone will be created");
-                logger.info(name + " wants its clone to be connected to " + natNetwork);
+                Logger.info(name + " metadata provided is correct, a clone will be created");
+                Logger.info(name + " wants its clone to be connected to " + natNetwork);
                 if (!natNetwork.equalsIgnoreCase("nat")) {
                     NAT_NETWORK = natNetwork;
-                    logger.info("updating machines network information for " + name + " to use " + NAT_NETWORK);
+                    Logger.info("updating machines network information for " + name + " to use " + NAT_NETWORK);
                     VMDataAccessService.updateVmNetworkInfo(name, NAT_NETWORK);
                     HAS_NAT_NETWORK = true;
                 }
                 //for now lets use only NATs due to the dhcp issues
-                logger.info("Cloning " + name + " from " + seedName + " (" + snapshot + ") attached to " + NAT_NETWORK);
+                Logger.info("Cloning " + name + " from " + seedName + " (" + snapshot + ") attached to " + NAT_NETWORK);
                 vBoxManager.cloneMachineFromSeed(seedName, snapshot, name, NAT_NETWORK);
                 VMDataAccessService.updateVmMeta(name, "CLONING", parts[1]);
                 //if you need to created a shared dir, this is a
                 //good point to do so
             } catch (Exception e) {
-                logger.warn(e.getMessage());
+                Logger.warn(e.getMessage());
                 output.println(RUNTIME_ERR);
                 abortAndClean(OPERATION_EXCEPTION);
             }
@@ -303,7 +300,7 @@ public class ClientConnection {
         try {
             freePort = VMDataAccessService.getHostPort();
         } catch (SQLException e) {
-            logger.warn("error getting free port " + e.getMessage());
+            Logger.warn("error getting free port " + e.getMessage());
         }
         output.println(freePort);
     }
@@ -324,7 +321,7 @@ public class ClientConnection {
             response = vBoxManager.createSharedStorage(name, numDisks, size);
         } catch (Exception w) {
             error = true;
-            logger.error("Error creating shareable storage " + w.getMessage());
+            Logger.error("Error creating shareable storage " + w.getMessage());
             w.printStackTrace();
         }
         if (error || response == null) {
@@ -341,15 +338,15 @@ public class ClientConnection {
         String[] parts = data.split("\\|");
         List<String> disks = Utils.deserializeList(parts[1]);
         if (disks == null) {
-            logger.error("Error deserializing list of disks, input was " + data);
+            Logger.error("Error deserializing list of disks, input was " + data);
             return;
         }
         String result = OPERATION_SUCCESSFUL;
         try {
             vBoxManager.addSharedStorageToMachine(name, disks);
-            logger.info("Operation successful fot " + name);
+            Logger.info("Operation successful fot " + name);
         } catch (Exception e) {
-            logger.error("Error attaching disks to " + name);
+            Logger.error("Error attaching disks to " + name);
             e.printStackTrace();
             result = RUNTIME_ERR;
         }
@@ -373,7 +370,7 @@ public class ClientConnection {
         try {
             result = vBoxManager.getMachineIPv4(name);
         } catch (Exception e) {
-            logger.warn("Problem getting vm ipv4 for " + name);
+            Logger.warn("Problem getting vm ipv4 for " + name);
             result = RUNTIME_ERR;
         }
         output.println(result);
@@ -391,7 +388,7 @@ public class ClientConnection {
             result = INVALID_ARG;
         } else {
             try {
-                logger.info("Creating custom port forward rule " + name);
+                Logger.info("Creating custom port forward rule " + name);
                 String ruleName = name + "_" + parts[3];
                 int hostPort = Integer.parseInt(parts[1]);
                 int guestPort = Integer.parseInt(parts[2]);
@@ -405,10 +402,10 @@ public class ClientConnection {
                 VMDataAccessService.insertRule(name, ruleName, hostPort, guestPort);
                 //save the port in the map for later clean up
                 ports.put(ruleName, hostPort);
-                logger.info("Custom port forward rule " + name + " created " + hostPort + "->" + guestPort + " [" + ruleName + "]");
+                Logger.info("Custom port forward rule " + name + " created " + hostPort + "->" + guestPort + " [" + ruleName + "]");
             } catch (Exception e) {
                 result = INVALID_ARG;
-                logger.info(e.getMessage(), e);
+                Logger.info(e.getMessage(), e);
             }
         }
         output.println(result);
@@ -430,7 +427,7 @@ public class ClientConnection {
                 int guestPort = Integer.parseInt(parts[2]);
                 String oldRuleName = name + "_" + parts[3];
                 String newRuleName = name + "_" + parts[4];
-                logger.info("Updating custom port forward rule " + name + " " + hostPort + "->" + guestPort);
+                Logger.info("Updating custom port forward rule " + name + " " + hostPort + "->" + guestPort);
                 if (HAS_NAT_NETWORK) {
                     vBoxManager.rmNATNetworkPortForwardRule(NAT_NETWORK, oldRuleName);
                     vBoxManager.addNATNetworkPortForwardRule(NAT_NETWORK, hostPort, guestPort, name, newRuleName);
@@ -444,10 +441,10 @@ public class ClientConnection {
                 //save the port in the map for later clean up
                 ports.remove(oldRuleName);
                 ports.put(newRuleName, hostPort);
-                logger.info("Update successful of custom port forward rule " + name + " " + hostPort + "->" + guestPort + " [" + newRuleName + "]");
+                Logger.info("Update successful of custom port forward rule " + name + " " + hostPort + "->" + guestPort + " [" + newRuleName + "]");
             } catch (Exception e) {
                 result = INVALID_ARG;
-                logger.info(e.getMessage(), e);
+                Logger.info(e.getMessage(), e);
             }
         }
         output.println(result);
@@ -458,12 +455,12 @@ public class ClientConnection {
 
     private void updateSSHPortForwardRule() {
         String result = OPERATION_SUCCESSFUL;
-        logger.info("Updating forward rule for " + name);
+        Logger.info("Updating forward rule for " + name);
         try {
-            logger.info("Removing old forward rule for " + name);
+            Logger.info("Removing old forward rule for " + name);
             Rule sshRule = VMDataAccessService.geSSHRule(name);
             //remove old rule
-            logger.info("Creating new forward rule for " + name);
+            Logger.info("Creating new forward rule for " + name);
             if (HAS_NAT_NETWORK) {
                 vBoxManager.rmNATNetworkPortForwardRule(NAT_NETWORK, sshRule.rule_name);
                 vBoxManager.addNATNetworkPortForwardRule(NAT_NETWORK, ports.get("ssh"), 22, name, sshRule.rule_name);
@@ -490,7 +487,7 @@ public class ClientConnection {
             //update machine register with the new IP
             VMDataAccessService.updateMachine(name, vBoxManager.getMachineIPv4(name), "WAITING_IP");
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            Logger.warn(e.getMessage());
             result = RUNTIME_ERR;
         }
         output.println(result);
@@ -511,7 +508,7 @@ public class ClientConnection {
         try {
             VMDataAccessService.updateMachine(name, vBoxManager.getMachineIPv4(name), "UP+IP ASSIGNED");
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            Logger.warn(e.getMessage());
             result = RUNTIME_ERR;
         }
         output.println(result);
@@ -523,16 +520,16 @@ public class ClientConnection {
     private void createNatNetwork() {
         String result = name;
         try {
-            logger.info(name + " requested NAT Network");
+            Logger.info(name + " requested NAT Network");
             VMDataAccessService.insertNATNetwork(name);
             if (vBoxManager.createNatNetwork(name)) {
-                logger.info("NAT Network " + name + " created successfully");
+                Logger.info("NAT Network " + name + " created successfully");
             } else {
-                logger.info("NAT Network creation failed [" + name + "]");
+                Logger.info("NAT Network creation failed [" + name + "]");
                 result = RUNTIME_ERR;
             }
         } catch (Exception e) {
-            logger.warn(e.getMessage());
+            Logger.warn(e.getMessage());
             result = RUNTIME_ERR;
         }
         output.println(result);
@@ -542,7 +539,7 @@ public class ClientConnection {
     }
 
     private void destroyMachine(String lastState) {
-        logger.info("Destroy machine called for " + name);
+        Logger.info("Destroy machine called for " + name);
         destroyMachineCalled = true;
         final DestroyVM terminator =
                 DestroyVM.newInstance(
@@ -579,14 +576,14 @@ public class ClientConnection {
      * @param lastState new state for the db
      */
     public void abortAndClean(String lastState) {
-        logger.info("abort and clean called for " + name);
+        Logger.info("abort and clean called for " + name);
         //stop polling related threads
         //thread reader
         if (poller != null) {
-            logger.info("Stopping polling thread of " + name);
+            Logger.info("Stopping polling thread of " + name);
             poller.shutdownNow();
-            logger.info("Is polling shutdown? " + name + " " + poller.isShutdown());
-            logger.info("Is polling terminated? " + name + " " + poller.isTerminated());
+            Logger.info("Is polling shutdown? " + name + " " + poller.isShutdown());
+            Logger.info("Is polling terminated? " + name + " " + poller.isTerminated());
         }
         //alive flag
         alive = false;
@@ -600,7 +597,7 @@ public class ClientConnection {
         try {
             socket.close();
         } catch (Exception e) {
-            logger.warn("There was an error closing the connection to client " + name);
+            Logger.warn("There was an error closing the connection to client " + name);
             e.printStackTrace();
         }
 
@@ -608,7 +605,7 @@ public class ClientConnection {
         if (!destroyMachineCalled) {
             destroyMachine(lastState);
         } else {
-            logger.info("second call ignored " + name + " as it was already called before");
+            Logger.info("second call ignored " + name + " as it was already called before");
         }
     }
 

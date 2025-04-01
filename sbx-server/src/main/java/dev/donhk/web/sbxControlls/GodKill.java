@@ -2,8 +2,8 @@ package dev.donhk.web.sbxControlls;
 
 import dev.donhk.sbx.ClientConnection;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
 import java.io.IOException;
 import java.util.List;
 
@@ -18,11 +18,11 @@ public class GodKill implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    public void execute(Context ctx) throws IOException {
         //kill the specified vm
         for (ClientConnection conn : clientConnections) {
             conn.abortAndClean(ADMIN_KILL);
         }
-        resp.getWriter().print("all_machines_are_gone");
+        Renderer.addHeaders("all_machines_are_gone", ctx);
     }
 }

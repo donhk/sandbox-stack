@@ -5,8 +5,7 @@ import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.pojos.HostPortStatus;
 import dev.donhk.pojos.Rule;
 import dev.donhk.vbox.VBoxManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tinylog.Logger;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -14,7 +13,6 @@ import java.util.Map;
 
 public class DestroyVM {
 
-    private final Logger logger = LoggerFactory.getLogger(DestroyVM.class);
     private final VMDataAccessService VMDataAccessService;
     private final Map<String, Integer> ports;
     private final boolean hasNatNetwork;
@@ -55,30 +53,30 @@ public class DestroyVM {
     }
 
     private void destroyVM() {
-        logger.info("Cleaning up machine " + vmName);
+        Logger.info("Cleaning up machine {}", vmName);
         //destroy vm
         try {
             vBoxManager.cleanUpVM(vmName);
         } catch (Exception e) {
-            logger.warn("Error removing machine " + e.getMessage(), e);
+            Logger.warn("Error removing machine {}", e.getMessage(), e);
         }
-        logger.info("Waiting confirmation of machine removal for " + vmName);
+        Logger.info("Waiting confirmation of machine removal for {}", vmName);
         try {
             while (vBoxManager.machineExists(vmName)) {
                 Thread.sleep(100L);
             }
-            logger.info("The machine " + vmName + " was successfully removed");
+            Logger.info("The machine {} was successfully removed", vmName);
         } catch (InterruptedException e) {
-            logger.warn(vmName + " " + e.getMessage());
+            Logger.warn("{} {}", vmName, e.getMessage());
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            logger.warn("error detecting vm, I will continue with clean up");
+            Logger.warn("error detecting vm, I will continue with clean up");
         }
         removeVMMetadataInDB();
     }
 
     private void disassembleNetwork() {
-        logger.info("Removing network configurations for " + vmName);
+        Logger.info("Removing network configurations for {}", vmName);
         if (!hasNatNetwork) {
             //no nat networks do not require any action from our side
             removeRulesOfThisVM();
@@ -89,7 +87,7 @@ public class DestroyVM {
             //yes, it is
             //is it being used by someone else?
             if (isNatNetworkUsedByOtherVM()) {
-                logger.info("The nat network " + natNetwork + " cannot be dropped because it is being used by other VMs");
+                Logger.info("The nat network {} cannot be dropped because it is being used by other VMs", natNetwork);
                 //yes, just remove the rules associated with this machine
                 removeRulesAssociatedWithThisNatNetwork();
             } else {
@@ -104,14 +102,14 @@ public class DestroyVM {
     }
 
     private void removeRulesAssociatedWithThisNatNetwork() {
-        logger.info("Removing rules associated with vm " + vmName + " from nat network " + natNetwork);
+        Logger.info("Removing rules associated with vm {} from nat network {}", vmName, natNetwork);
         try {
             final List<Rule> rules = VMDataAccessService.getRules(vmName);
             for (Rule rule : rules) {
                 vBoxManager.rmNATNetworkPortForwardRule(natNetwork, rule.rule_name);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.error("sql error", e);
         }
         markPortsAsFreeInDB();
     }
@@ -123,7 +121,7 @@ public class DestroyVM {
                 vBoxManager.rmNATPortForwardRule(vmName, rule.rule_name);
             }
         } catch (Exception e) {
-            logger.warn("error removing rule: " + e.getMessage());
+            Logger.warn("error removing rule: {}", e.getMessage());
         }
         markPortsAsFreeInDB();
     }
@@ -131,28 +129,28 @@ public class DestroyVM {
     private void markPortsAsFreeInDB() {
         //remove any entry on rules table
         //a machine creation might have failed but the rule might have been added
-        logger.info("Freeing ports used by " + vmName);
+        Logger.info("Freeing ports used by {}", vmName);
         try {
             VMDataAccessService.dropRule(vmName);
             for (Map.Entry<String, Integer> e : ports.entrySet()) {
                 int port = e.getValue();
                 String portName = e.getKey();
-                logger.info("Freeing " + portName + " " + port + " " + vmName);
+                Logger.info("Freeing {} {} {}", portName, port, vmName);
                 VMDataAccessService.updatePort(port, HostPortStatus.FREE);
             }
         } catch (SQLException e) {
-            logger.warn("error removing rules info " + e.getMessage(), e);
+            Logger.warn("error removing rules info {}", e.getMessage(), e);
         }
     }
 
     private void removeVMMetadataInDB() {
         if (VMDataAccessService.machineExists(vmName)) {
             try {
-                logger.info("Removing metadata of " + vmName);
+                Logger.info("Removing metadata of {}", vmName);
                 VMDataAccessService.updateVmState(vmName, lastState);
                 VMDataAccessService.removeMachine(vmName);
             } catch (SQLException e) {
-                logger.warn("error removing vm meta " + e.getMessage(), e);
+                Logger.warn("error removing vm meta {}", e.getMessage(), e);
             }
         }
     }
@@ -165,11 +163,12 @@ public class DestroyVM {
                     continue;
                 }
                 if (otherVM.network.equals(natNetwork)) {
-                    logger.info(otherVM.name + " is attached to " + natNetwork + " it cannot be dropped yet");
+                    Logger.info("{} is attached to {} it cannot be dropped yet", otherVM.name, natNetwork);
                     return true;
                 }
             }
         } catch (SQLException e) {
+            Logger.error("sql err", e);
             return false;
         }
         return false;
@@ -177,16 +176,16 @@ public class DestroyVM {
 
     private void removeWholeNatNetwork() {
         try {
-            logger.info("Removing nat network " + vmName + " because no one else is using it");
+            Logger.info("Removing nat network {} because no one else is using it", vmName);
             vBoxManager.removeNatNetwork(vmName);
         } catch (Exception e) {
-            logger.warn("Error removing nat network " + e.getMessage(), e);
+            Logger.warn("Error removing nat network {}", e.getMessage(), e);
         }
 
         try {
             VMDataAccessService.dropNATNetwork(vmName);
         } catch (SQLException e) {
-            logger.warn(e.getMessage(), e);
+            Logger.warn(e.getMessage(), e);
         }
 
     }

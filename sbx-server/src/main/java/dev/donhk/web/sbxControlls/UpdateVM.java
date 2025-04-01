@@ -3,8 +3,11 @@ package dev.donhk.web.sbxControlls;
 import dev.donhk.database.VMDataAccessService;
 import dev.donhk.pojos.Machine;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import dev.donhk.web.Renderer;
+import io.javalin.http.Context;
+import org.eclipse.jetty.util.UrlEncoded;
+import org.tinylog.Logger;
+
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -16,24 +19,25 @@ public class UpdateVM implements WebCmd {
     }
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        final String vm = req.getParameter("vm");
+    public void execute(Context ctx) throws IOException {
+        final String rawVm = ctx.req().getParameter("vm");
+        final String vm = UrlEncoded.decodeString(rawVm).trim();
         try {
             final Machine activeVM = VMDataAccessService.findMachine(vm);
             if (activeVM != null) {
                 final String adminMessage = VMDataAccessService.getVMMessage(vm);
                 //update vm
                 VMDataAccessService.pollMachine(vm);
-                if (adminMessage.length() > 0) {
-                    resp.getWriter().print("msg" + adminMessage);
+                if (!adminMessage.isEmpty()) {
+                    Renderer.addHeaders("msg" + adminMessage, ctx);
                 } else {
-                    resp.getWriter().print("ok");
+                    Renderer.addHeaders("ok", ctx);
                 }
             } else {
-                resp.getWriter().print("vm_is_gone");
+                Renderer.addHeaders("vm_is_gone", ctx);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            Logger.error("sql exception", e);
         }
 
     }

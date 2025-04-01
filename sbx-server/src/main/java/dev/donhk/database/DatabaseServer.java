@@ -7,8 +7,7 @@ import dev.donhk.helpers.Config;
 import dev.donhk.helpers.Utils;
 import dev.donhk.pojos.HostPortStatus;
 import org.h2.tools.Server;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.tinylog.Logger;
 
 import java.io.IOException;
 import java.sql.*;
@@ -18,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DatabaseServer {
 
-    private final Logger logger = LoggerFactory.getLogger(DatabaseServer.class);
     private HikariDataSource dataSource;
     private Server webServer = null;
     private Server tcpServer = null;
@@ -62,7 +60,7 @@ public class DatabaseServer {
                 webServer = Server.createWebServer("-webAllowOthers", "-webPort", String.valueOf(this.config.webPort));
                 webServer.start();
             } catch (SQLException e) {
-                logger.error("Error starting Database Web server", e);
+                Logger.error("Error starting Database Web server", e);
                 this.startError.set(true);
             } finally {
                 latch.countDown();
@@ -73,7 +71,7 @@ public class DatabaseServer {
                 tcpServer = Server.createTcpServer("-tcpAllowOthers", "-tcpPort", String.valueOf(this.config.tcpPort));
                 tcpServer.start();
             } catch (SQLException e) {
-                logger.error("Error starting Database TCP server", e);
+                Logger.error("Error starting Database TCP server", e);
                 this.startError.set(true);
             } finally {
                 latch.countDown();
@@ -111,7 +109,7 @@ public class DatabaseServer {
      */
     private void setupConnectionPool() {
         String jdbcUrl = String.format("jdbc:h2:%s/./%s", tcpServer.getURL(), this.config.dbName);
-        logger.info("jdbc connection endpoint: {}", jdbcUrl);
+        Logger.info("jdbc connection endpoint: {}", jdbcUrl);
 
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(jdbcUrl);
@@ -147,7 +145,7 @@ public class DatabaseServer {
     private void initDBSchema() throws SQLException, IOException {
         try (Connection conn = getDataSource().getConnection()) {
             if (reset) {
-                logger.info("rdbms schema refresh");
+                Logger.info("rdbms schema refresh");
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute(Utils.resource2txt("dropschema.sql"));
                 }

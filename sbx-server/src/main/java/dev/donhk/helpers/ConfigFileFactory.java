@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ConfigFileFactory {
 
-    private List<MachineMeta> metaExtractor;
+    private final List<MachineMeta> metaExtractor;
 
     public ConfigFileFactory(List<MachineMeta> metaExtractor) {
         this.metaExtractor = metaExtractor;

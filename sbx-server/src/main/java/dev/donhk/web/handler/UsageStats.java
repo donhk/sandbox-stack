@@ -6,6 +6,7 @@ import dev.donhk.web.Renderer;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
+import org.tinylog.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +53,7 @@ public class UsageStats implements Handler {
 
             variables.put("rows", sb.toString());
         } catch (Exception e) {
-            e.printStackTrace();
+            Logger.error("error loading data", e);
             variables.put("rows", "<tr><td colspan=\"8\">Error loading data</td></tr>");
         }
 

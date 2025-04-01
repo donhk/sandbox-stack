@@ -1,9 +1,8 @@
 package dev.donhk.web.sbxControlls;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import io.javalin.http.Context;
 import java.io.IOException;
 
 public interface WebCmd {
-    void execute(HttpServletRequest req, HttpServletResponse resp) throws IOException;
+    void execute(Context ctx) throws IOException;
 }

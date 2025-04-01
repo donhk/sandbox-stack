@@ -29,25 +29,16 @@ public class SbxControl implements Handler {
 
     private WebCmd getWebCmd(Context ctx) {
         Tasks task = findTask(ctx);
-        switch (task) {
-            case UPDATE:
-                return new UpdateVM(vmDataAccessService);
-            case VMS_RUNNING:
-                return new VmsRunning(vmDataAccessService);
-            case KILL:
-                return new KillVM(clientConnections);
-            case GODKILL:
-                return new GodKill(clientConnections);
-            case VMS_INFO:
-                return new VmsInfo(vmDataAccessService);
-            case HELP:
-                return new Help();
-            case ADMIN_MSG:
-                return new PostService(vmDataAccessService);
-            case NULL:
-            default:
-                return new Nothing();
-        }
+        return switch (task) {
+            case UPDATE -> new UpdateVM(vmDataAccessService);
+            case VMS_RUNNING -> new VmsRunning(vmDataAccessService);
+            case KILL -> new KillVM(clientConnections);
+            case GODKILL -> new GodKill(clientConnections);
+            case VMS_INFO -> new VmsInfo(vmDataAccessService);
+            case HELP -> new Help();
+            case ADMIN_MSG -> new PostService(vmDataAccessService);
+            default -> new Nothing();
+        };
     }
 
     private Tasks findTask(Context ctx) {
