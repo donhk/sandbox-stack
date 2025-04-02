@@ -1,12 +1,17 @@
 package dev.donhk.server;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.database.VMDataAccessService;
 import dev.donhk.helpers.Config;
+import dev.donhk.helpers.JacksonConfigHelper;
 import dev.donhk.sbx.ClientConnection;
 import dev.donhk.web.handler.*;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.json.JavalinJackson;
 import org.tinylog.Logger;
 
 import java.util.List;
@@ -28,14 +33,24 @@ public class HttpDaemon {
 
     public void startServer() {
         Logger.info("Creating instance of HttpServer ");
-        Javalin app = Javalin.create(config ->
-                config.staticFiles.add(
-                        staticFileConfig -> {
-                            staticFileConfig.hostedPath = "/";
-                            staticFileConfig.directory = "/public";
-                            staticFileConfig.location = Location.CLASSPATH;
-                        }
-                )).start(port);
+
+        Javalin app = Javalin.create(config -> {
+                    config.staticFiles.add(
+                            staticFileConfig -> {
+                                staticFileConfig.hostedPath = "/";
+                                staticFileConfig.directory = "/public";
+                                staticFileConfig.location = Location.CLASSPATH;
+                            }
+                    );
+                    JavalinJackson mapper = new JavalinJackson();
+                    mapper.updateMapper(m -> {
+                        m.registerModule(new Jdk8Module());
+                        m.registerModule(new JavaTimeModule());
+                        m.enable(SerializationFeature.INDENT_OUTPUT);
+                    });
+                    config.jsonMapper(mapper);
+                }
+        ).start(port);
 
         Logger.info("web server started at: {}", address);
 

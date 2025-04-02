@@ -10,6 +10,12 @@ dependencies {
     implementation project(":vbox-glue")
     implementation 'info.picocli:picocli:4.7.5'
     implementation "io.javalin:javalin:6.5.0"
+    // Core Jackson library for JSON serialization/deserialization
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+    // Support for Java 8+ types like Optional
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.17.0'
+    // (Optional) Support for Java Time (if you use LocalDate, Instant, etc.)
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.0'
     implementation "com.zaxxer:HikariCP:5.0.1"
     implementation 'com.h2database:h2:2.2.220'
     implementation 'commons-io:commons-io:2.14.0'

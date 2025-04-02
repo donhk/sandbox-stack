@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+service SandboxerService {
+    //
+    // Observability
+    //
+    // return the state of an operation
+    rpc GetOperationState (GetOperationStateRequest) returns (GetOperationStateResponse) {}
+    //
+    // VM Operations
+    //
+    // Clone a given machine/snapshot and create a new one
+    rpc CreateMachine (CreateMachineRequest) returns (CreateMachineResponse) {}
+    // returns a machine details
+    rpc GetMachine (GetMachineRequest) returns (GetMachineResponse) {}
+    // start the machine
+    rpc StartMachine (StartMachineRequest) returns (StartMachineResponse) {}
+    // update the vm parameters
+    rpc UpdateMachine (UpdateMachineRequest) returns (UpdateMachineResponse) {}
+    // destroys the machine
+    rpc DeleteMachine (DeleteMachineRequest) returns (DeleteMachineResponse) {}
+    //
+    // Network Operations
+    //
+    // creates a port-forward rule from the host to the vm
+    rpc CreatePortForwardRule (CreatePortForwardRuleRequest) returns (CreatePortForwardRuleResponse) {}
+    // refresh the rule to access to the vm
+    rpc UpdatePortForwardRule (UpdatePortForwardRuleRequest) returns (UpdatePortForwardRuleResponse) {}
+    // create a NAT network
+    rpc CreateNatNetwork (CreateNatNetworkRequest) returns (CreateNatNetworkResponse) {}
+    // Get NAT network name
+    rpc GetNatNetwork (GetNatNetworkRequest) returns (GetNatNetworkResponse) {}
+    //
+    // Storage Operations
+    //
+    // create shared storage units
+    rpc CreateStorageUnits (CreateStorageUnitsRequest) returns (CreateStorageUnitsResponse) {}
+    // get shared storage units
+    rpc GetStorageUnits (GetStorageUnitsRequest) returns (GetStorageUnitsResponse) {}
+}
+
+/// | Mode             | VM Access to Internet | VM Seen by External Devices | Host Access to VM |
+/// |------------------|------------------------|------------------------------|--------------------|
+/// | NAT              | Yes                    | No                           | Limited (port fwd) |
+/// | Bridged          | Yes                    | Yes                          | Yes                |
+/// | Host-Only        | No                     | No                           | Yes                |
+/// | Internal Network | No                     | No                           | Only to other VMs  |
+enum NetworkType {
+    NAT = 0;
+    BRIDGED = 1;
+    HOST_ONLY = 2;
+    INTERNAL_NETWORK = 3;
+}
+
+message Network {
+    NetworkType network_type = 5;
+    string network_name = 6;
+}
+
+message CreateMachineRequest {
+    string uuid = 1;
+    string name = 2;
+    string seed_name = 3;
+    string snapshot = 4;
+    optional Network network = 5;
+    repeated StorageUnit storage_units = 6;
+}
+
+message CreateMachineResponse {
+    string operation_id = 1;
+}
+
+message GetMachineRequest {
+    string uuid = 1;
+}
+
+enum MachineState {
+    // Machine object created, not yet started
+    INITIALIZED = 0;
+    // Machine is booting up
+    BOOTING = 1;
+    // Machine is up and operational
+    RUNNING = 2;
+    // Machine is in the process of shutting down
+    SHUTTING_DOWN = 3;
+    // Machine is completely shut down or deleted
+    TERMINATED = 4;
+}
+
+message Port {
+    string name = 1;
+    uint32 host_port = 2;
+    uint32 vm_port = 3;
+}
+
+message StorageUnit {
+    string disk_name = 1;
+    string size_bytes = 2;
+}
+
+message Machine {
+    string uuid = 1;
+    string name = 2;
+    string seed_name = 3;
+    string snapshot = 4;
+    Network network = 5;
+    optional string ip_address = 6;
+    repeated Port ports = 7;
+    string hostname = 8;
+    MachineState machine_state = 9;
+    google.protobuf.Timestamp created_at = 10;
+    google.protobuf.Timestamp seen_at = 11;
+    repeated StorageUnit storage_units = 12;
+}
+
+message GetMachineResponse {
+    optional Machine machine = 1;
+}
+
+message CreatePortForwardRuleRequest {
+    string uuid = 1;
+    uint32 vm_port = 2;
+    string port_name = 3;
+}
+
+message CreatePortForwardRuleResponse {
+    uint32 host_port = 1;
+}
+
+message StartMachineRequest {
+    string uuid = 1;
+}
+
+message StartMachineResponse {
+    string operation_id = 1;
+}
+
+message DeleteMachineRequest {
+    string uuid = 1;
+}
+
+message DeleteMachineResponse {
+    string operation_id = 1;
+}
+
+message UpdateMachineRequest {
+    string uuid = 1;
+    optional uint32 new_time_secs = 2;
+    optional google.protobuf.Timestamp seen_at = 3;
+}
+
+message UpdateMachineResponse {
+}
+
+message UpdatePortForwardRuleRequest {
+    string uuid = 1;
+    uint32 vm_port = 2;
+    string new_rule_name = 3;
+}
+
+message UpdatePortForwardRuleResponse {
+}
+
+message CreateNatNetworkRequest {
+    string uuid = 1;
+}
+
+message CreateNatNetworkResponse {
+    string operation_id = 1;
+}
+
+message GetNatNetworkRequest {
+    string uuid = 1;
+}
+
+message GetNatNetworkResponse {
+    optional string network_name = 1;
+}
+
+message CreateStorageUnitsRequest {
+    string uuid = 1;
+    uint64 size_bytes = 2;
+    uint32 num_disks = 3;
+}
+
+message CreateStorageUnitsResponse {
+    string operation_id = 1;
+}
+
+message GetStorageUnitsRequest {
+    string uuid = 1;
+}
+
+message GetStorageUnitsResponse {
+    repeated StorageUnit storage_units = 1;
+}
+
+message GetOperationStateRequest {
+    string operation_id = 1;
+}
+
+enum OperationState {
+    // Operation has begun
+    STARTED = 0;
+    // Operation completed successfully
+    SUCCEEDED = 1;
+    // Operation encountered an error
+    FAILED = 2;
+    // Operation was manually or automatically cancelled
+    CANCELLED = 3;
+    // Operation did not finish in the expected time
+    TIMEOUT = 4;
+}
+
+message GetOperationStateResponse {
+    OperationState state = 1;
+}
