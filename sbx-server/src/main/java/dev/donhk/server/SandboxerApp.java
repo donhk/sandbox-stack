@@ -6,19 +6,14 @@ import akka.actor.Props;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxActor;
 import dev.donhk.database.DatabaseServer;
-import dev.donhk.helpers.Config;
+import dev.donhk.config.Config;
 import dev.donhk.helpers.LoggingInitializer;
-import dev.donhk.sbx.ClientConnection;
 import dev.donhk.system.Postman;
-import dev.donhk.system.VBoxNetsGarbageCollector;
-import dev.donhk.system.VMMetadataSynchronizer;
 import org.tinylog.Logger;
 import picocli.CommandLine;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Main class of the sandboxer service
@@ -32,8 +27,6 @@ public class SandboxerApp {
 
     private final Config config;
     private final ActorRef vboxActor;
-    //clients pool
-    private final List<ClientConnection> clientConnections = new ArrayList<>();
 
     private SandboxerApp(Config config) {
         this.config = config;
@@ -59,7 +52,7 @@ public class SandboxerApp {
     }
 
     private void startHttpEndpoints(HikariDataSource conn) {
-        final HttpDaemon http = new HttpDaemon(this.config, conn, clientConnections);
+        final HttpService http = new HttpService(this.config, conn);
         http.startServer();
     }
 
@@ -87,37 +80,37 @@ public class SandboxerApp {
     }
 
     private void startSystemWorkers(HikariDataSource conn) {
-        VMMetadataSynchronizer.newInstance(conn, vboxActor, config);
-        VBoxNetsGarbageCollector.newInstance(conn, vboxActor, config, clientConnections);
+        //VMMetadataSynchronizer.newInstance(conn, vboxActor, config);
+        //VBoxNetsGarbageCollector.newInstance(conn, vboxActor, config);
         Postman.newInstance(conn, config);
     }
 
-    private void sandboxerApp(HikariDataSource conn) {
-        new Thread(() -> {
-            try {
-                logger.info("starting sanboxer app listener");
-                ServerSocket server = new ServerSocket(appPort);
-                logger.info("Waiting connections");
-                while (keepAlive) {
-                    Socket socket = server.accept();
-                    logger.info("New client");
-                    //create new client connection
-                    final ClientConnection clientConnection = new ClientConnection(socket, boxManager, conn);
-                    //and start it up
-                    try {
-                        clientConnection.start();
-                    } catch (Exception e) {
-                        logger.info("There was a problem starting one client " + clientConnection.getName());
-                    }
-                    //added to our list of connection for later on maintenance
-                    clientConnections.add(clientConnection);
-                }
-                server.close();
-            } catch (Exception e) {
-                keepAlive = false;
-                e.printStackTrace();
-                Thread.currentThread().interrupt();
-            }
-        }).start();
-    }
+//    private void sandboxerApp(HikariDataSource conn) {
+//        new Thread(() -> {
+//            try {
+//                logger.info("starting sanboxer app listener");
+//                ServerSocket server = new ServerSocket(appPort);
+//                logger.info("Waiting connections");
+//                while (keepAlive) {
+//                    Socket socket = server.accept();
+//                    logger.info("New client");
+//                    //create new client connection
+//                    final ClientConnection clientConnection = new ClientConnection(socket, boxManager, conn);
+//                    //and start it up
+//                    try {
+//                        clientConnection.start();
+//                    } catch (Exception e) {
+//                        logger.info("There was a problem starting one client " + clientConnection.getName());
+//                    }
+//                    //added to our list of connection for later on maintenance
+//                    clientConnections.add(clientConnection);
+//                }
+//                server.close();
+//            } catch (Exception e) {
+//                keepAlive = false;
+//                e.printStackTrace();
+//                Thread.currentThread().interrupt();
+//            }
+//        }).start();
+//    }
 }

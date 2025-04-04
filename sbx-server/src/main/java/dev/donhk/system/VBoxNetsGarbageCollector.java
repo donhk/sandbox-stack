@@ -4,9 +4,8 @@ import akka.actor.ActorRef;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxMessage;
 import dev.donhk.database.VMDataAccessService;
-import dev.donhk.helpers.Config;
+import dev.donhk.config.Config;
 import dev.donhk.pojos.ActiveMachineRow;
-import dev.donhk.sbx.ClientConnection;
 import org.tinylog.Logger;
 
 import java.sql.SQLException;
@@ -35,33 +34,29 @@ import static dev.donhk.actors.Utilities.askSync;
 public class VBoxNetsGarbageCollector {
 
     private final VMDataAccessService VMDataAccessService;
-    private final List<ClientConnection> clientConnections;
     private final ActorRef vboxActor;
 
     /**
      * Constructs a new {@code VBoxNetsGarbageCollector}.
      *
-     * @param conn              a JDBC connection pool (Hikari)
-     * @param vboxActor         reference to the VirtualBox actor
-     * @param config            application configuration
-     * @param clientConnections active client connections to be monitored
+     * @param conn      a JDBC connection pool (Hikari)
+     * @param vboxActor reference to the VirtualBox actor
+     * @param config    application configuration
      */
-    private VBoxNetsGarbageCollector(HikariDataSource conn, ActorRef vboxActor, Config config, List<ClientConnection> clientConnections) {
+    private VBoxNetsGarbageCollector(HikariDataSource conn, ActorRef vboxActor, Config config) {
         this.vboxActor = vboxActor;
         this.VMDataAccessService = new VMDataAccessService(conn, config);
-        this.clientConnections = clientConnections;
     }
 
     /**
      * Initializes and runs a new {@code VBoxNetsGarbageCollector} instance.
      *
-     * @param conn              a JDBC connection pool (Hikari)
-     * @param vboxActor         reference to the VirtualBox actor
-     * @param config            application configuration
-     * @param clientConnections active client connections to be monitored
+     * @param conn      a JDBC connection pool (Hikari)
+     * @param vboxActor reference to the VirtualBox actor
+     * @param config    application configuration
      */
-    public static void newInstance(HikariDataSource conn, ActorRef vboxActor, Config config, List<ClientConnection> clientConnections) {
-        VBoxNetsGarbageCollector VBoxNetsGarbageCollector = new VBoxNetsGarbageCollector(conn, vboxActor, config, clientConnections);
+    public static void newInstance(HikariDataSource conn, ActorRef vboxActor, Config config) {
+        VBoxNetsGarbageCollector VBoxNetsGarbageCollector = new VBoxNetsGarbageCollector(conn, vboxActor, config);
         VBoxNetsGarbageCollector.run();
     }
 
@@ -103,16 +98,6 @@ public class VBoxNetsGarbageCollector {
         } catch (SQLException e) {
             Logger.warn(e.getMessage(), e);
         }
-        removeOldInstances();
-    }
-
-    /**
-     * Removes inactive {@link ClientConnection} instances from the internal list.
-     */
-    private void removeOldInstances() {
-        Logger.info("Removing old instances, initial size [" + clientConnections.size() + "]");
-        clientConnections.removeIf(connection -> !connection.isAlive());
-        Logger.info("[" + clientConnections.size() + "] after clean");
     }
 
 }

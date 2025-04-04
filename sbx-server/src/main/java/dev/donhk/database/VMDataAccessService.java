@@ -2,7 +2,7 @@
 package dev.donhk.database;
 
 import com.zaxxer.hikari.HikariDataSource;
-import dev.donhk.helpers.Config;
+import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
 import org.tinylog.Logger;
 

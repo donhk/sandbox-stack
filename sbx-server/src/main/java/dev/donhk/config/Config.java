@@ -1,4 +1,4 @@
-package dev.donhk.helpers;
+package dev.donhk.config;
 
 import picocli.CommandLine;
 
@@ -25,18 +25,12 @@ public class Config implements Runnable {
     // Sandboxer service configurations
     //
     @CommandLine.Option(names = {"-s", "--service-port"}, description = "Sandboxer Service port")
-    public int sbxServicePort = 11500;
-
-    @CommandLine.Option(names = {"-x", "--service-ui-port"}, description = "Sandboxer Service Web UI port")
-    public int sbxServiceUIPort = 11502;
-
-    //
-    // Sandboxer host port preferences
-    //
+    public int sbxServicePort = 8008;
+    
     @CommandLine.Option(names = {"-l", "--service-low-port"}, description = "Sandboxer Service low port")
     public int sbxServiceLowPort = 11200;
 
-    @CommandLine.Option(names = {"-h", "--service-ui-port"}, description = "Sandboxer Service high port")
+    @CommandLine.Option(names = {"-h", "--service-high-port"}, description = "Sandboxer Service high port")
     public int sbxServiceHighPort = 11500;
 
     //

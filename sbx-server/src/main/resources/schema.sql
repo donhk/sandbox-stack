@@ -66,7 +66,7 @@ create table if not exists machines_meta
   snapshot_name  varchar(50),
   cpu_count      varchar(50),
   memory         varchar(50),
-  user           varchar(50),
+  "user"         varchar(50),
   password       varchar(100),
   home           varchar(100),
   comments       varchar(1000)

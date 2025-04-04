@@ -11,8 +11,9 @@ public class LoggingInitializer {
             return;
         }
 
-        Configuration.set("writer", "file");
-        Configuration.set("writer.file", "logs/app.log");
+        Configuration.set("writer1", "console");
+        Configuration.set("writer2", "file");
+        Configuration.set("writer2.file", "logs/app.log");
         Configuration.set("level", "info");
         Configuration.set("format", "{date:yyyy-MM-dd HH:mm:ss} [{level}] ({class}.{method}) {message}");
 

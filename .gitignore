@@ -36,3 +36,9 @@ sandboxer-*.zip
 vbox_sdk.zip
 sdk/
 vbox-glue/src/main/libs/*.jar
+
+*.db
+
+!sbx-server/src/main/resources/public/.keep
+
+sbx-server/src/main/resources/public/
