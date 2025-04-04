@@ -1,5 +1,11 @@
 # Sandbox-Stack 🚀
 
+### Compile Front-End
+```bash
+cd sbx-front-end
+npm run build
+```
+
 Sandboxer server and client
 
 ```bash

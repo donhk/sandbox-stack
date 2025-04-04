@@ -3,7 +3,7 @@ package dev.donhk.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import dev.donhk.helpers.Config;
+import dev.donhk.config.Config;
 import dev.donhk.helpers.Utils;
 import dev.donhk.pojos.HostPortStatus;
 import org.h2.tools.Server;
@@ -57,7 +57,10 @@ public class DatabaseServer {
     public void startServer() throws SQLException, IOException, InterruptedException {
         new Thread(() -> {
             try {
-                webServer = Server.createWebServer("-webAllowOthers", "-webPort", String.valueOf(this.config.webPort));
+                webServer = Server.createWebServer(
+                        "-webAllowOthers",
+                        "-webPort", String.valueOf(this.config.webPort)
+                );
                 webServer.start();
             } catch (SQLException e) {
                 Logger.error("Error starting Database Web server", e);
@@ -68,7 +71,11 @@ public class DatabaseServer {
         }).start();
         new Thread(() -> {
             try {
-                tcpServer = Server.createTcpServer("-tcpAllowOthers", "-tcpPort", String.valueOf(this.config.tcpPort));
+                tcpServer = Server.createTcpServer(
+                        "-tcpAllowOthers",
+                        "-tcpPort", String.valueOf(this.config.tcpPort),
+                        "-ifNotExists"
+                );
                 tcpServer.start();
             } catch (SQLException e) {
                 Logger.error("Error starting Database TCP server", e);
@@ -85,7 +92,7 @@ public class DatabaseServer {
 
         setupConnectionPool();
         // Run after pool is created
-        initDBSchema();
+        //initDBSchema();
     }
 
     /**

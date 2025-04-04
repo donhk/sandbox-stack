@@ -1,4 +1,4 @@
-package dev.donhk.helpers;
+package dev.donhk.config;
 
 import dev.donhk.pojos.MachineMeta;
 

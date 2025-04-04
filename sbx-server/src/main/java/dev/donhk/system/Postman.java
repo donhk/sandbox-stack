@@ -2,7 +2,7 @@ package dev.donhk.system;
 
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.database.VMDataAccessService;
-import dev.donhk.helpers.Config;
+import dev.donhk.config.Config;
 import org.tinylog.Logger;
 
 import java.util.concurrent.Executors;
