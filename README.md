@@ -3,7 +3,15 @@
 ### Compile Front-End
 ```bash
 cd sbx-front-end
+npm install
+npm start
 npm run build
+```
+
+### Compile Sandbox Server
+```bash
+./gradlew build
+./gradlew :sbx-server:run
 ```
 
 Sandboxer server and client
