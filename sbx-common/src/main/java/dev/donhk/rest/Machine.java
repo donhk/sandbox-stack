@@ -18,6 +18,6 @@ public record Machine(
         String hostname,
         MachineState machineState,
         Instant createdAt,
-        Instant seenAt,
+        Instant updatedAt,
         List<StorageUnit> storageUnits
 ) {}
