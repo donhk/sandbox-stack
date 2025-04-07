@@ -39,6 +39,8 @@ vbox-glue/src/main/libs/*.jar
 
 *.db
 
+node_modules
+
 !sbx-server/src/main/resources/public/.keep
 
 sbx-server/src/main/resources/public/

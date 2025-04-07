@@ -1,10 +1,10 @@
 {
-  "short_name": "CoreUI-React",
-  "name": "CoreUI-React sample",
+  "short_name": "Sandboxer",
+  "name": "Sandboxer Server",
   "icons": [
     {
-      "src": "./assets/img/favicon.png",
-      "sizes": "100x100",
+      "src": "./favicon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png"
     }
   ],

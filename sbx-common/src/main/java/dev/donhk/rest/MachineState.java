@@ -5,5 +5,6 @@ public enum MachineState {
     BOOTING,
     RUNNING,
     SHUTTING_DOWN,
+    FAILED,
     TERMINATED
 }
