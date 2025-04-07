@@ -6,7 +6,6 @@ const VMSeeds = React.lazy(() => import('./views/seeds/VMSeeds'))
 const Settings = React.lazy(() => import('./views/settings/Settings'))
 
 const routes = [
-    {path: '/', exact: true, name: 'Home'},
     {path: '/dashboard', name: 'Dashboard', element: Dashboard},
     {path: '/machines', name: 'Machines', element: Machines},
     {path: '/vm-seeds', name: 'VMSeeds', element: VMSeeds},
