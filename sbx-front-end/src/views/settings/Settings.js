@@ -1,11 +1,13 @@
-import {CCard, CCardBody, CCardHeader} from "@coreui/react";
+import SettingsCom from "src/views/settings/SettingsCom";
+import ControlPlane from "src/views/settings/ControlPlane";
 
 const Settings = () => {
     return (
-        <CCard>
-            <CCardHeader>Settings</CCardHeader>
-            <CCardBody>This is a Body</CCardBody>
-        </CCard>
+        <>
+            <SettingsCom/>
+            <br/>
+            <ControlPlane/>
+        </>
     )
 }
 
