@@ -1,5 +1,5 @@
 import {
-    CCard, CCardBody, CCardHeader,
+    CCard, CCardBody, CCardHeader, CFormSwitch,
     CTable,
     CTableBody,
     CTableDataCell,
@@ -11,7 +11,7 @@ import React from "react";
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import CIcon from "@coreui/icons-react";
-import {cilDevices, cilLan, cilLibrary, cilRectangle,} from "@coreui/icons";
+import {cilDevices, cilLan, cilLibrary, cilPin, cilRectangle,} from "@coreui/icons";
 
 function formatPortMappings(mappings) {
     return mappings
@@ -47,7 +47,7 @@ const Machines = () => {
             "name": "Machine-A",
             "seedName": "seed-01",
             "snapshot": "snap-001",
-            "network": "LAN",
+            "network": "network1",
             "ipAddress": "192.168.1.10",
             "ports": [
                 {"name": "ssh", "hostPort": 2222, "vmPort": 22},
@@ -66,7 +66,7 @@ const Machines = () => {
             "name": "Machine-B",
             "seedName": "seed-02",
             "snapshot": "snap-002",
-            "network": "WAN",
+            "network": "network2",
             "ipAddress": null,
             "ports": [
                 {"name": "ssh", "hostPort": 2223, "vmPort": 22}
@@ -85,7 +85,7 @@ const Machines = () => {
             "name": "Machine-C",
             "seedName": "seed-03",
             "snapshot": "snap-003",
-            "network": "LAN",
+            "network": "network3",
             "ipAddress": "10.0.0.3",
             "ports": [],
             "hostname": "machine-c.local",
@@ -99,7 +99,7 @@ const Machines = () => {
             "name": "Machine-D",
             "seedName": "seed-04",
             "snapshot": "snap-004",
-            "network": "WAN",
+            "network": "network4",
             "ipAddress": "172.16.0.5",
             "ports": [
                 {"name": "http", "hostPort": 8000, "vmPort": 80}
@@ -117,7 +117,7 @@ const Machines = () => {
             "name": "Machine-E",
             "seedName": "seed-05",
             "snapshot": "snap-005",
-            "network": "LAN",
+            "network": "network5",
             "ipAddress": null,
             "ports": [],
             "hostname": "machine-e",
@@ -131,7 +131,7 @@ const Machines = () => {
             "name": "Machine-F",
             "seedName": "seed-06",
             "snapshot": "snap-006",
-            "network": "LAN",
+            "network": "network6",
             "ipAddress": "192.168.100.6",
             "ports": [
                 {"name": "ssh", "hostPort": 2226, "vmPort": 22}
@@ -149,7 +149,7 @@ const Machines = () => {
             "name": "Machine-G",
             "seedName": "seed-07",
             "snapshot": "snap-007",
-            "network": "WAN",
+            "network": "network6",
             "ipAddress": "10.10.10.7",
             "ports": [
                 {"name": "api", "hostPort": 9000, "vmPort": 9000}
@@ -168,7 +168,7 @@ const Machines = () => {
             "name": "Machine-H",
             "seedName": "seed-08",
             "snapshot": "snap-008",
-            "network": "LAN",
+            "network": "network8",
             "ipAddress": "192.168.1.108",
             "ports": [],
             "hostname": "machine-h",
@@ -184,7 +184,7 @@ const Machines = () => {
             "name": "Machine-I",
             "seedName": "seed-09",
             "snapshot": "snap-009",
-            "network": "WAN",
+            "network": "network9",
             "ipAddress": null,
             "ports": [],
             "hostname": "machine-i.test",
@@ -198,7 +198,7 @@ const Machines = () => {
             "name": "Machine-J",
             "seedName": "seed-10",
             "snapshot": "snap-010",
-            "network": "LAN",
+            "network": "network10",
             "ipAddress": "10.0.1.10",
             "ports": [
                 {"name": "admin", "hostPort": 9999, "vmPort": 9999}
@@ -216,7 +216,7 @@ const Machines = () => {
             "name": "Machine-K",
             "seedName": "seed-11",
             "snapshot": "snap-011",
-            "network": "WAN",
+            "network": "network11",
             "ipAddress": "10.2.3.4",
             "ports": [],
             "hostname": "machine-k",
@@ -230,7 +230,7 @@ const Machines = () => {
             "name": "Machine-L",
             "seedName": "seed-12",
             "snapshot": "snap-012",
-            "network": "LAN",
+            "network": "network12",
             "ipAddress": "192.168.0.212",
             "ports": [],
             "hostname": "machine-l",
@@ -244,7 +244,7 @@ const Machines = () => {
             "name": "Machine-M",
             "seedName": "seed-13",
             "snapshot": "snap-013",
-            "network": "WAN",
+            "network": "network1",
             "ipAddress": null,
             "ports": [],
             "hostname": "machine-m",
@@ -258,7 +258,7 @@ const Machines = () => {
             "name": "Machine-N",
             "seedName": "seed-14",
             "snapshot": "snap-014",
-            "network": "LAN",
+            "network": "network1",
             "ipAddress": "10.0.0.14",
             "ports": [],
             "hostname": "machine-n",
@@ -272,7 +272,7 @@ const Machines = () => {
             "name": "Machine-O",
             "seedName": "seed-15",
             "snapshot": "snap-015",
-            "network": "WAN",
+            "network": "network2",
             "ipAddress": "172.31.0.15",
             "ports": [],
             "hostname": "machine-o",
@@ -286,7 +286,7 @@ const Machines = () => {
             "name": "Machine-P",
             "seedName": "seed-16",
             "snapshot": "snap-016",
-            "network": "LAN",
+            "network": "network2",
             "ipAddress": null,
             "ports": [],
             "hostname": "machine-p",
@@ -300,7 +300,7 @@ const Machines = () => {
             "name": "Machine-Q",
             "seedName": "seed-17",
             "snapshot": "snap-017",
-            "network": "WAN",
+            "network": "network3",
             "ipAddress": "10.4.5.17",
             "ports": [],
             "hostname": "machine-q",
@@ -314,7 +314,7 @@ const Machines = () => {
             "name": "Machine-R",
             "seedName": "seed-18",
             "snapshot": "snap-018",
-            "network": "LAN",
+            "network": "network3",
             "ipAddress": "192.168.10.18",
             "ports": [],
             "hostname": "machine-r",
@@ -328,7 +328,7 @@ const Machines = () => {
             "name": "Machine-S",
             "seedName": "seed-19",
             "snapshot": "snap-019",
-            "network": "WAN",
+            "network": "network20",
             "ipAddress": null,
             "ports": [],
             "hostname": "machine-s",
@@ -342,7 +342,7 @@ const Machines = () => {
             "name": "Machine-T",
             "seedName": "seed-20",
             "snapshot": "snap-020",
-            "network": "LAN",
+            "network": "network21",
             "ipAddress": "10.0.2.20",
             "ports": [],
             "hostname": "machine-t",
@@ -390,6 +390,11 @@ const Machines = () => {
                                        title="Storage"
                                 />
                             </CTableHeaderCell>
+                            <CTableHeaderCell className="bg-body-tertiary text-center">
+                                <CIcon icon={cilPin}
+                                       title="Pin this machine to keep it running regardless of the client"
+                                />
+                            </CTableHeaderCell>
                         </CTableRow>
                     </CTableHead>
 
@@ -433,6 +438,9 @@ const Machines = () => {
                                 </CTableDataCell>
                                 <CTableDataCell className="text-justify text-info">
                                     {formatDiskSizes(item.storageUnits)}
+                                </CTableDataCell>
+                                <CTableDataCell className="d-flex justify-content-center">
+                                    <CFormSwitch size="lg" id="keep"/>
                                 </CTableDataCell>
                             </CTableRow>
                         ))}
