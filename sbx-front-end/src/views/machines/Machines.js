@@ -7,11 +7,12 @@ import {
     CTableHeaderCell,
     CTableRow
 } from "@coreui/react";
-import React from "react";
+import React, {useRef, useState} from "react";
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import CIcon from "@coreui/icons-react";
 import {cilDevices, cilLan, cilLibrary, cilPin, cilRectangle,} from "@coreui/icons";
+import ModalWindow from "src/views/machines/ModalWindow";
 
 function formatPortMappings(mappings) {
     return mappings
@@ -34,12 +35,13 @@ function formatDiskSizes(disks) {
     };
 
     const totalBytes = disks.reduce((acc, {sizeBytes}) => acc + Number(sizeBytes), 0);
-
     return formatBytes(totalBytes);
 }
 
-
 const Machines = () => {
+    const [selectedMachine, setSelectedMachine] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const lastFocusedRef = useRef(null);
     const format = "MMM DD, hh:mm A";
     const virtualMachines = [
         {
@@ -230,7 +232,7 @@ const Machines = () => {
             "name": "Machine-L",
             "seedName": "seed-12",
             "snapshot": "snap-012",
-            "network": "network12",
+            "network": "network3",
             "ipAddress": "192.168.0.212",
             "ports": [],
             "hostname": "machine-l",
@@ -342,7 +344,7 @@ const Machines = () => {
             "name": "Machine-T",
             "seedName": "seed-20",
             "snapshot": "snap-020",
-            "network": "network21",
+            "network": "network3",
             "ipAddress": "10.0.2.20",
             "ports": [],
             "hostname": "machine-t",
@@ -355,101 +357,121 @@ const Machines = () => {
         }
     ];
 
+    const openModal = (machine, event) => {
+        lastFocusedRef.current = event.currentTarget;
+        setSelectedMachine(machine);
+        setModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setTimeout(() => {
+            lastFocusedRef.current?.focus();
+        }, 0);
+    };
+
+    const filterMachines = (machine) =>
+        machine ? virtualMachines.filter((vm) => vm.network === machine.network) : [];
+
     return (
-        <CCard>
-            <CCardHeader>Sandboxer VMs</CCardHeader>
-            <CCardBody>
-                <CTable align="middle" className="mb-0 border" hover responsive>
-
-                    <CTableHead className="text-nowrap">
-                        <CTableRow>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
-                                <CIcon icon={cilDevices}
-                                       title="UUID"
-                                />
-                            </CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Name</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
-                                <CIcon icon={cilLibrary}
-                                       title="Seed"
-                                />
-                            </CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Snapshot</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
-                                <CIcon icon={cilLan}
-                                       title="Network"
-                                />
-                            </CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Ip</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Ports</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">State</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Created</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary">Updated</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
-                                <CIcon icon={cilRectangle}
-                                       title="Storage"
-                                />
-                            </CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
-                                <CIcon icon={cilPin}
-                                       title="Pin this machine to keep it running regardless of the client"
-                                />
-                            </CTableHeaderCell>
-                        </CTableRow>
-                    </CTableHead>
-
-                    <CTableBody>
-                        {virtualMachines.map((item, index) => (
-                            <CTableRow v-for="item in tableItems" key={index}>
-                                <CTableDataCell className="text-justify">
-                                    {item.uuid}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify">
-                                    {item.name}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify">
-                                    {item.seedName}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify text-primary">
-                                    {item.snapshot}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify">
-                                    {item.network}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify text-primary">
-                                    {item.ipAddress}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify text-info text-nowrap">
-                                    {formatPortMappings(item.ports)}
-                                </CTableDataCell>
-                                <CTableDataCell
-                                    className={clsx('text-justify', {
-                                        'text-danger': item.machineState === 'FAILED',
-                                        'text-success': item.machineState !== 'FAILED',
-                                    })}
-                                >
-                                    {item.machineState}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify text-primary">
-                                    {dayjs(item.createdAt).format(format)}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify">
-                                    {item.updatedAt}
-                                </CTableDataCell>
-                                <CTableDataCell className="text-justify text-info">
-                                    {formatDiskSizes(item.storageUnits)}
-                                </CTableDataCell>
-                                <CTableDataCell className="d-flex justify-content-center">
-                                    <CFormSwitch size="lg" id="keep"/>
-                                </CTableDataCell>
+        <>
+            <CCard>
+                <CCardHeader>Sandboxer VMs</CCardHeader>
+                <CCardBody>
+                    <CTable align="middle" className="mb-0 border" hover responsive>
+                        <CTableHead className="text-nowrap">
+                            <CTableRow>
+                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                    <CIcon icon={cilDevices} title="UUID"/>
+                                </CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Name</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                    <CIcon icon={cilLibrary} title="Seed"/>
+                                </CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Snapshot</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                    <CIcon icon={cilLan} title="Network"/>
+                                </CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Ip</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Ports</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">State</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Created</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary">Updated</CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                    <CIcon icon={cilRectangle} title="Storage"/>
+                                </CTableHeaderCell>
+                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                    <CIcon icon={cilPin}
+                                           title="Pin this machine to keep it running regardless of the client"/>
+                                </CTableHeaderCell>
                             </CTableRow>
-                        ))}
-                    </CTableBody>
+                        </CTableHead>
 
-                </CTable>
-            </CCardBody>
-        </CCard>
-    )
-}
+                        <CTableBody>
+                            {virtualMachines.map((item, index) => (
+                                <CTableRow key={index}>
+                                    <CTableDataCell className="text-justify">
+                                        {item.uuid}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify">
+                                        {item.name}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify">
+                                        {item.seedName}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify text-primary">
+                                        {item.snapshot}
+                                    </CTableDataCell>
+                                    <CTableDataCell
+                                        className="text-justify"
+                                        onClick={(e) => openModal(item, e)}
+                                        tabIndex={0} // to allow focus
+                                        role="button"
+                                        style={{cursor: 'pointer'}}
+                                        title="Click to view details"
+                                    >
+                                        {item.network}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify text-primary">
+                                        {item.ipAddress}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify text-info text-nowrap">
+                                        {formatPortMappings(item.ports)}
+                                    </CTableDataCell>
+                                    <CTableDataCell
+                                        className={clsx('text-justify', {
+                                            'text-danger': item.machineState === 'FAILED',
+                                            'text-success': item.machineState !== 'FAILED',
+                                        })}
+                                    >
+                                        {item.machineState}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify text-primary">
+                                        {dayjs(item.createdAt).format(format)}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify">
+                                        {item.updatedAt}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="text-justify text-info">
+                                        {formatDiskSizes(item.storageUnits)}
+                                    </CTableDataCell>
+                                    <CTableDataCell className="d-flex justify-content-center">
+                                        <CFormSwitch size="lg" id={`keep-${index}`}/>
+                                    </CTableDataCell>
+                                </CTableRow>
+                            ))}
+                        </CTableBody>
+                    </CTable>
+                </CCardBody>
+            </CCard>
+
+            <ModalWindow
+                visible={modalVisible}
+                machines={filterMachines(selectedMachine)}
+                onClose={closeModal}
+            />
+        </>
+    );
+};
 
 export default Machines;
