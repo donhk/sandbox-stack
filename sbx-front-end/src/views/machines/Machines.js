@@ -1,5 +1,6 @@
 import {
-    CCard, CCardBody, CCardHeader, CFormSwitch,
+    CButton,
+    CCard, CCardBody, CCardHeader, CFormSwitch, CSpinner,
     CTable,
     CTableBody,
     CTableDataCell,
@@ -13,6 +14,7 @@ import dayjs from 'dayjs';
 import CIcon from "@coreui/icons-react";
 import {cilDevices, cilLan, cilLibrary, cilPin, cilRectangle,} from "@coreui/icons";
 import ModalWindow from "src/views/machines/ModalWindow";
+import lockTable from "src/views/machines/utilities";
 
 function formatPortMappings(mappings) {
     return mappings
@@ -39,10 +41,14 @@ function formatDiskSizes(disks) {
 }
 
 const Machines = () => {
+
+    const format = "MMM DD, hh:mm A";
+
+    const [lockingVm, setLockingVm] = useState(new Map)
+    const [lockedVm, setLockedVm] = useState(new Map)
     const [selectedMachine, setSelectedMachine] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const lastFocusedRef = useRef(null);
-    const format = "MMM DD, hh:mm A";
     const virtualMachines = [
         {
             "uuid": "mch-001",
@@ -61,7 +67,8 @@ const Machines = () => {
             "updatedAt": "2025-04-01T10:30:00Z",
             "storageUnits": [
                 {"diskName": "sda", "sizeBytes": "500000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-002",
@@ -80,7 +87,8 @@ const Machines = () => {
             "storageUnits": [
                 {"diskName": "sda", "sizeBytes": "1000000000000"},
                 {"diskName": "sdb", "sizeBytes": "200000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-003",
@@ -94,7 +102,8 @@ const Machines = () => {
             "machineState": "RUNNING",
             "createdAt": "2025-03-10T12:00:00Z",
             "updatedAt": "2025-04-01T12:05:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-004",
@@ -112,7 +121,8 @@ const Machines = () => {
             "updatedAt": "2025-03-25T14:30:00Z",
             "storageUnits": [
                 {"diskName": "sda", "sizeBytes": "750000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-005",
@@ -126,7 +136,8 @@ const Machines = () => {
             "machineState": "CREATING",
             "createdAt": "2025-04-01T00:00:00Z",
             "updatedAt": "2025-04-01T00:01:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-006",
@@ -144,7 +155,8 @@ const Machines = () => {
             "updatedAt": "2025-04-01T07:45:00Z",
             "storageUnits": [
                 {"diskName": "root", "sizeBytes": "320000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-007",
@@ -163,7 +175,8 @@ const Machines = () => {
             "storageUnits": [
                 {"diskName": "boot", "sizeBytes": "10000000000"},
                 {"diskName": "data", "sizeBytes": "1000000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-008",
@@ -179,7 +192,8 @@ const Machines = () => {
             "updatedAt": "2025-04-01T23:15:00Z",
             "storageUnits": [
                 {"diskName": "primary", "sizeBytes": "640000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-009",
@@ -193,7 +207,8 @@ const Machines = () => {
             "machineState": "TERMINATED",
             "createdAt": "2025-01-01T00:00:00Z",
             "updatedAt": "2025-03-01T00:00:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-010",
@@ -211,7 +226,8 @@ const Machines = () => {
             "updatedAt": "2025-04-01T10:20:00Z",
             "storageUnits": [
                 {"diskName": "disk1", "sizeBytes": "800000000000"}
-            ]
+            ],
+            "locked": false,
         },
         {
             "uuid": "mch-011",
@@ -225,7 +241,8 @@ const Machines = () => {
             "machineState": "STOPPED",
             "createdAt": "2025-02-20T01:00:00Z",
             "updatedAt": "2025-04-01T01:10:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-012",
@@ -239,7 +256,8 @@ const Machines = () => {
             "machineState": "RUNNING",
             "createdAt": "2025-02-14T08:00:00Z",
             "updatedAt": "2025-04-01T08:30:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-013",
@@ -253,7 +271,8 @@ const Machines = () => {
             "machineState": "FAILED",
             "createdAt": "2025-01-10T03:00:00Z",
             "updatedAt": "2025-03-20T03:30:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-014",
@@ -267,7 +286,8 @@ const Machines = () => {
             "machineState": "CREATING",
             "createdAt": "2025-03-28T20:00:00Z",
             "updatedAt": "2025-04-01T20:05:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-015",
@@ -281,7 +301,8 @@ const Machines = () => {
             "machineState": "RUNNING",
             "createdAt": "2025-03-25T04:30:00Z",
             "updatedAt": "2025-04-01T04:45:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-016",
@@ -295,7 +316,8 @@ const Machines = () => {
             "machineState": "STOPPED",
             "createdAt": "2025-02-18T11:00:00Z",
             "updatedAt": "2025-04-01T11:05:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-017",
@@ -309,7 +331,8 @@ const Machines = () => {
             "machineState": "UPDATING",
             "createdAt": "2025-03-10T05:00:00Z",
             "updatedAt": "2025-04-01T05:01:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-018",
@@ -323,7 +346,8 @@ const Machines = () => {
             "machineState": "RUNNING",
             "createdAt": "2025-02-05T02:00:00Z",
             "updatedAt": "2025-04-01T02:20:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-019",
@@ -337,7 +361,8 @@ const Machines = () => {
             "machineState": "TERMINATED",
             "createdAt": "2024-12-31T12:00:00Z",
             "updatedAt": "2025-01-31T12:01:00Z",
-            "storageUnits": []
+            "storageUnits": [],
+            "locked": false,
         },
         {
             "uuid": "mch-020",
@@ -353,23 +378,34 @@ const Machines = () => {
             "updatedAt": "2025-04-01T00:00:00Z",
             "storageUnits": [
                 {"diskName": "main", "sizeBytes": "960000000000"}
-            ]
+            ],
+            "locked": false,
         }
     ];
+    const handleSwitchChange = async (machine, event) => {
+        const isChecked = event.target.checked
+        // start loading
+        setLockingVm(prev => new Map(prev).set(machine.uuid, true))
+
+        try {
+            const result = await lockTable(machine, isChecked) // pass checked state if needed
+            setLockedVm(prev => new Map(prev).set(machine.uuid, result));
+        } finally {
+            setLockingVm(prev => new Map(prev).set(machine.uuid, false))
+        }
+    }
 
     const openModal = (machine, event) => {
         lastFocusedRef.current = event.currentTarget;
         setSelectedMachine(machine);
         setModalVisible(true);
     };
-
     const closeModal = () => {
         setModalVisible(false);
         setTimeout(() => {
             lastFocusedRef.current?.focus();
         }, 0);
     };
-
     const filterMachines = (machine) =>
         machine ? virtualMachines.filter((vm) => vm.network === machine.network) : [];
 
@@ -389,7 +425,7 @@ const Machines = () => {
                                     <CIcon icon={cilLibrary} title="Seed"/>
                                 </CTableHeaderCell>
                                 <CTableHeaderCell className="bg-body-tertiary">Snapshot</CTableHeaderCell>
-                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                <CTableHeaderCell className="bg-body-tertiary text-jusify">
                                     <CIcon icon={cilLan} title="Network"/>
                                 </CTableHeaderCell>
                                 <CTableHeaderCell className="bg-body-tertiary">Ip</CTableHeaderCell>
@@ -400,7 +436,7 @@ const Machines = () => {
                                 <CTableHeaderCell className="bg-body-tertiary text-center">
                                     <CIcon icon={cilRectangle} title="Storage"/>
                                 </CTableHeaderCell>
-                                <CTableHeaderCell className="bg-body-tertiary text-center">
+                                <CTableHeaderCell className="bg-body-tertiary text-justify">
                                     <CIcon icon={cilPin}
                                            title="Pin this machine to keep it running regardless of the client"/>
                                 </CTableHeaderCell>
@@ -419,7 +455,7 @@ const Machines = () => {
                                     <CTableDataCell className="text-justify">
                                         {item.seedName}
                                     </CTableDataCell>
-                                    <CTableDataCell className="text-justify text-primary">
+                                    <CTableDataCell className="text-justify text-info">
                                         {item.snapshot}
                                     </CTableDataCell>
                                     <CTableDataCell
@@ -430,7 +466,7 @@ const Machines = () => {
                                         style={{cursor: 'pointer'}}
                                         title="Click to view details"
                                     >
-                                        {item.network}
+                                        <CButton color="success" variant="ghost">{item.network}</CButton>
                                     </CTableDataCell>
                                     <CTableDataCell className="text-justify text-primary">
                                         {item.ipAddress}
@@ -455,8 +491,18 @@ const Machines = () => {
                                     <CTableDataCell className="text-justify text-info">
                                         {formatDiskSizes(item.storageUnits)}
                                     </CTableDataCell>
-                                    <CTableDataCell className="d-flex justify-content-center">
-                                        <CFormSwitch size="lg" id={`keep-${index}`}/>
+                                    <CTableDataCell className="justify-content-center">
+                                        {lockingVm.get(item.uuid) ? (
+                                            <CSpinner color="info" variant="grow"/>
+                                        ) : (
+                                            <CFormSwitch
+                                                onChange={(e) => handleSwitchChange(item, e)}
+                                                size="lg"
+                                                id={`m-keep-${index}`}
+                                                checked={lockedVm.get(item.uuid) ?? item.locked}
+                                                disabled={item.machineState === 'FAILED'}
+                                            />
+                                        )}
                                     </CTableDataCell>
                                 </CTableRow>
                             ))}
@@ -469,6 +515,9 @@ const Machines = () => {
                 visible={modalVisible}
                 machines={filterMachines(selectedMachine)}
                 onClose={closeModal}
+                handleSwitchChange={handleSwitchChange}
+                lockingVm={lockingVm}
+                lockedVm={lockedVm}
             />
         </>
     );

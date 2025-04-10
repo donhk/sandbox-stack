@@ -3,14 +3,21 @@ import {
     CModal,
     CModalBody,
     CModalHeader,
-    CModalTitle, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow
+    CModalTitle, CSpinner, CTable, CTableBody, CTableDataCell, CTableHead, CTableHeaderCell, CTableRow
 } from "@coreui/react";
 import React from "react";
 import CIcon from "@coreui/icons-react";
 import {cilPin} from "@coreui/icons";
 import clsx from "clsx";
 
-const ModalWindow = ({visible, machines, onClose}) => {
+const ModalWindow = ({
+                         visible,
+                         machines,
+                         onClose,
+                         handleSwitchChange,
+                         lockingVm,
+                         lockedVm,
+                     }) => {
     const width = 600;
     const height = 500;
     const radius = 180;
@@ -108,7 +115,7 @@ const ModalWindow = ({visible, machines, onClose}) => {
                             <CTableHeaderCell className="bg-body-tertiary">Name</CTableHeaderCell>
                             <CTableHeaderCell className="bg-body-tertiary">Ip</CTableHeaderCell>
                             <CTableHeaderCell className="bg-body-tertiary">State</CTableHeaderCell>
-                            <CTableHeaderCell className="bg-body-tertiary text-center">
+                            <CTableHeaderCell className="bg-body-tertiary text-justify">
                                 <CIcon icon={cilPin}
                                        title="Pin this machine to keep it running regardless of the client"/>
                             </CTableHeaderCell>
@@ -117,7 +124,10 @@ const ModalWindow = ({visible, machines, onClose}) => {
 
                     <CTableBody>
                         {machines.map((item, index) => (
-                            <CTableRow key={index}>
+                            <CTableRow
+                                key={index}
+                                hovver={true}
+                            >
                                 <CTableDataCell className="text-justify">
                                     {item.name}
                                 </CTableDataCell>
@@ -132,8 +142,17 @@ const ModalWindow = ({visible, machines, onClose}) => {
                                 >
                                     {item.machineState}
                                 </CTableDataCell>
-                                <CTableDataCell className="d-flex justify-content-center">
-                                    <CFormSwitch size="lg" id={`nested-keep-${index}`}/>
+                                <CTableDataCell className="justify-content-center">
+                                    {lockingVm.get(item.uuid) ? (
+                                        <CSpinner size="sm" color="info" variant="grow"/>
+                                    ) : (
+                                        <CFormSwitch
+                                            onChange={(e) => handleSwitchChange(item, e)}
+                                            id={`keep-${index}`}
+                                            checked={lockedVm.get(item.uuid) ?? item.locked}
+                                            disabled={item.machineState === 'FAILED'}
+                                        />
+                                    )}
                                 </CTableDataCell>
                             </CTableRow>
                         ))}
