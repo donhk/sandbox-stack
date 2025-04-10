@@ -2,6 +2,7 @@ import React from 'react'
 import {useSelector, useDispatch} from 'react-redux'
 
 import {
+    CImage,
     CSidebar,
     CSidebarHeader,
 } from '@coreui/react'
@@ -10,6 +11,8 @@ import {AppSidebarNav} from './AppSidebarNav'
 
 // sidebar nav config
 import navigation from '../_nav'
+import sbxLogo from '../assets/brand/sandboxer-logo.webp';
+import {Link} from "react-router-dom";
 
 const AppSidebar = () => {
     const dispatch = useDispatch()
@@ -26,12 +29,14 @@ const AppSidebar = () => {
             }}
         >
             <CSidebarHeader className="border-bottom">
-                <a href="/#/dashboard">
-                    <img
+                <Link to="/dashboard">
+                    <CImage
+                        src={sbxLogo}
+                        alt="Sandboxer Logo"
                         className="img-fluid"
-                        src='src/assets/brand/sandboxer-logo.webp'
-                        alt="Sandboxer Logo"/>
-                </a>
+                        style={{cursor: 'pointer'}}
+                    />
+                </Link>
             </CSidebarHeader>
             <AppSidebarNav items={navigation}/>
         </CSidebar>
