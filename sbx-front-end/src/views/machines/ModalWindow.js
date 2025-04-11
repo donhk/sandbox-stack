@@ -34,7 +34,12 @@ const ModalWindow = ({
     const nodeRadius = 80;
 
     return (
-        <CModal alignment="center" visible={visible} onClose={onClose} size="xl">
+        <CModal
+            alignment="center"
+            visible={visible}
+            onClose={onClose}
+            size="xl"
+        >
             <CModalHeader>
                 <CModalTitle>Machines in network: {machines[0]?.network || "Unknown"}</CModalTitle>
             </CModalHeader>
@@ -88,7 +93,7 @@ const ModalWindow = ({
                                         fontSize="12"
                                         fill="white"
                                     >
-                                        {machine.ipAddress || "N/A"}
+                                        {machine.vmIpAddress || "N/A"}
                                     </text>
                                     {portLines.map((line, i) => (
                                         <text
@@ -126,13 +131,12 @@ const ModalWindow = ({
                         {machines.map((item, index) => (
                             <CTableRow
                                 key={index}
-                                hovver={true}
                             >
                                 <CTableDataCell className="text-justify">
                                     {item.name}
                                 </CTableDataCell>
                                 <CTableDataCell className="text-justify text-primary">
-                                    {item.ipAddress}
+                                    {item.vmIpAddress}
                                 </CTableDataCell>
                                 <CTableDataCell
                                     className={clsx('text-justify', {

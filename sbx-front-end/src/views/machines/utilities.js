@@ -1,6 +1,7 @@
 function lockTable(machine, isChecked) {
     console.log("Switch is now:", isChecked ? "ON" : "OFF");
-    console.log("locking table " + machine.uuid);
+    console.log("locking uuid " + machine.uuid);
+    console.log("locking hostname " + machine.hostname);
 
     return new Promise((resolve) => {
         setTimeout(() => {
