@@ -122,7 +122,8 @@ public class DatabaseServer {
         hikariConfig.setJdbcUrl(jdbcUrl);
         hikariConfig.setUsername(this.config.dbUser);
         hikariConfig.setPassword(this.config.dbPass);
-        hikariConfig.setMaximumPoolSize(10);
+        hikariConfig.setLeakDetectionThreshold(15_000);
+        hikariConfig.setMaximumPoolSize(100);
         hikariConfig.setMinimumIdle(3);
         hikariConfig.setConnectionTimeout(600_000);
         hikariConfig.setIdleTimeout(60_000);

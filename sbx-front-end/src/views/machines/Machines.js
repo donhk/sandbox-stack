@@ -62,7 +62,7 @@ const Machines = () => {
                 {"name": "ssh", "hostPort": 2222, "vmPort": 22},
                 {"name": "http", "hostPort": 8080, "vmPort": 80}
             ],
-            "vmHostname": "machine-a.local",
+            "vmHostname": "machineRow-a.local",
             "machineState": "RUNNING",
             "createdAt": "2025-03-01T10:00:00Z",
             "updatedAt": "2025-04-01T10:30:00Z",
@@ -82,7 +82,7 @@ const Machines = () => {
             "ports": [
                 {"name": "ssh", "hostPort": 2223, "vmPort": 22}
             ],
-            "vmHostname": "machine-b.example.com",
+            "vmHostname": "machineRow-b.example.com",
             "machineState": "STOPPED",
             "createdAt": "2025-03-05T09:15:00Z",
             "updatedAt": "2025-04-01T09:45:00Z",
@@ -101,7 +101,7 @@ const Machines = () => {
             "vmIpAddress": "10.0.0.3",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-c.local",
+            "vmHostname": "machineRow-c.local",
             "machineState": "RUNNING",
             "createdAt": "2025-03-10T12:00:00Z",
             "updatedAt": "2025-04-01T12:05:00Z",
@@ -119,7 +119,7 @@ const Machines = () => {
             "ports": [
                 {"name": "http", "hostPort": 8000, "vmPort": 80}
             ],
-            "vmHostname": "machine-d.local",
+            "vmHostname": "machineRow-d.local",
             "machineState": "FAILED",
             "createdAt": "2025-02-25T14:00:00Z",
             "updatedAt": "2025-03-25T14:30:00Z",
@@ -137,7 +137,7 @@ const Machines = () => {
             "vmIpAddress": null,
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-e",
+            "vmHostname": "machineRow-e",
             "machineState": "CREATING",
             "createdAt": "2025-04-01T00:00:00Z",
             "updatedAt": "2025-04-01T00:01:00Z",
@@ -155,7 +155,7 @@ const Machines = () => {
             "ports": [
                 {"name": "ssh", "hostPort": 2226, "vmPort": 22}
             ],
-            "vmHostname": "machine-f.domain",
+            "vmHostname": "machineRow-f.domain",
             "machineState": "RUNNING",
             "createdAt": "2025-03-15T07:30:00Z",
             "updatedAt": "2025-04-01T07:45:00Z",
@@ -175,7 +175,7 @@ const Machines = () => {
             "ports": [
                 {"name": "api", "hostPort": 9000, "vmPort": 9000}
             ],
-            "vmHostname": "machine-g.cloud",
+            "vmHostname": "machineRow-g.cloud",
             "machineState": "UPDATING",
             "createdAt": "2025-03-22T18:00:00Z",
             "updatedAt": "2025-04-01T18:01:00Z",
@@ -194,7 +194,7 @@ const Machines = () => {
             "vmIpAddress": "192.168.1.108",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-h",
+            "vmHostname": "machineRow-h",
             "machineState": "RUNNING",
             "createdAt": "2025-03-29T23:00:00Z",
             "updatedAt": "2025-04-01T23:15:00Z",
@@ -212,7 +212,7 @@ const Machines = () => {
             "vmIpAddress": null,
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-i.test",
+            "vmHostname": "machineRow-i.test",
             "machineState": "TERMINATED",
             "createdAt": "2025-01-01T00:00:00Z",
             "updatedAt": "2025-03-01T00:00:00Z",
@@ -230,7 +230,7 @@ const Machines = () => {
             "ports": [
                 {"name": "admin", "hostPort": 9999, "vmPort": 9999}
             ],
-            "vmHostname": "machine-j.local",
+            "vmHostname": "machineRow-j.local",
             "machineState": "RUNNING",
             "createdAt": "2025-03-20T10:10:00Z",
             "updatedAt": "2025-04-01T10:20:00Z",
@@ -248,7 +248,7 @@ const Machines = () => {
             "vmIpAddress": "10.2.3.4",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-k",
+            "vmHostname": "machineRow-k",
             "machineState": "STOPPED",
             "createdAt": "2025-02-20T01:00:00Z",
             "updatedAt": "2025-04-01T01:10:00Z",
@@ -264,7 +264,7 @@ const Machines = () => {
             "vmIpAddress": "192.168.0.212",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-l",
+            "vmHostname": "machineRow-l",
             "machineState": "RUNNING",
             "createdAt": "2025-02-14T08:00:00Z",
             "updatedAt": "2025-04-01T08:30:00Z",
@@ -280,7 +280,7 @@ const Machines = () => {
             "vmIpAddress": null,
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-m",
+            "vmHostname": "machineRow-m",
             "machineState": "FAILED",
             "createdAt": "2025-01-10T03:00:00Z",
             "updatedAt": "2025-03-20T03:30:00Z",
@@ -296,7 +296,7 @@ const Machines = () => {
             "vmIpAddress": "10.0.0.14",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-n",
+            "vmHostname": "machineRow-n",
             "machineState": "CREATING",
             "createdAt": "2025-03-28T20:00:00Z",
             "updatedAt": "2025-04-01T20:05:00Z",
@@ -312,7 +312,7 @@ const Machines = () => {
             "vmIpAddress": "172.31.0.15",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-o",
+            "vmHostname": "machineRow-o",
             "machineState": "RUNNING",
             "createdAt": "2025-03-25T04:30:00Z",
             "updatedAt": "2025-04-01T04:45:00Z",
@@ -328,7 +328,7 @@ const Machines = () => {
             "vmIpAddress": null,
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-p",
+            "vmHostname": "machineRow-p",
             "machineState": "STOPPED",
             "createdAt": "2025-02-18T11:00:00Z",
             "updatedAt": "2025-04-01T11:05:00Z",
@@ -344,7 +344,7 @@ const Machines = () => {
             "vmIpAddress": "10.4.5.17",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-q",
+            "vmHostname": "machineRow-q",
             "machineState": "UPDATING",
             "createdAt": "2025-03-10T05:00:00Z",
             "updatedAt": "2025-04-01T05:01:00Z",
@@ -360,7 +360,7 @@ const Machines = () => {
             "vmIpAddress": "192.168.10.18",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-r",
+            "vmHostname": "machineRow-r",
             "machineState": "RUNNING",
             "createdAt": "2025-02-05T02:00:00Z",
             "updatedAt": "2025-04-01T02:20:00Z",
@@ -376,7 +376,7 @@ const Machines = () => {
             "vmIpAddress": null,
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-s",
+            "vmHostname": "machineRow-s",
             "machineState": "TERMINATED",
             "createdAt": "2024-12-31T12:00:00Z",
             "updatedAt": "2025-01-31T12:01:00Z",
@@ -392,7 +392,7 @@ const Machines = () => {
             "vmIpAddress": "10.0.2.20",
             "hostname": "local1.localhost:3999",
             "ports": [],
-            "vmHostname": "machine-t",
+            "vmHostname": "machineRow-t",
             "machineState": "RUNNING",
             "createdAt": "2025-03-31T23:59:00Z",
             "updatedAt": "2025-04-01T00:00:00Z",
@@ -402,22 +402,22 @@ const Machines = () => {
             "locked": false,
         }
     ];
-    const handleSwitchChange = async (machine, event) => {
+    const handleSwitchChange = async (machineRow, event) => {
         const isChecked = event.target.checked
         // start loading
-        setLockingVm(prev => new Map(prev).set(machine.uuid, true))
+        setLockingVm(prev => new Map(prev).set(machineRow.uuid, true))
 
         try {
-            const result = await lockTable(machine, isChecked) // pass checked state if needed
-            setLockedVm(prev => new Map(prev).set(machine.uuid, result));
+            const result = await lockTable(machineRow, isChecked) // pass checked state if needed
+            setLockedVm(prev => new Map(prev).set(machineRow.uuid, result));
         } finally {
-            setLockingVm(prev => new Map(prev).set(machine.uuid, false))
+            setLockingVm(prev => new Map(prev).set(machineRow.uuid, false))
         }
     }
 
-    const openModal = (machine, event) => {
+    const openModal = (machineRow, event) => {
         lastFocusedRef.current = event.currentTarget;
-        setSelectedMachine(machine);
+        setSelectedMachine(machineRow);
         setModalVisible(true);
     };
     const closeModal = () => {
@@ -426,8 +426,8 @@ const Machines = () => {
             lastFocusedRef.current?.focus();
         }, 0);
     };
-    const filterMachines = (machine) =>
-        machine ? virtualMachines.filter((vm) => vm.network === machine.network) : [];
+    const filterMachines = (machineRow) =>
+        machineRow ? virtualMachines.filter((vm) => vm.network === machineRow.network) : [];
 
     return (
         <>
@@ -458,7 +458,7 @@ const Machines = () => {
                                 </CTableHeaderCell>
                                 <CTableHeaderCell className="bg-body-tertiary text-justify">
                                     <CIcon icon={cilPin}
-                                           title="Pin this machine to keep it running regardless of the client"/>
+                                           title="Pin this machineRow to keep it running regardless of the client"/>
                                 </CTableHeaderCell>
                             </CTableRow>
                         </CTableHead>

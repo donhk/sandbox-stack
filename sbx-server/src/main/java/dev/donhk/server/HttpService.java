@@ -8,6 +8,7 @@ import dev.donhk.database.VMDataAccessService;
 import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
 import dev.donhk.web.rest.observability.GetOperationState;
+import dev.donhk.web.rest.ux.ListMachines;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
@@ -50,6 +51,7 @@ public class HttpService {
 
         // REST API endpoint
         vmOperations(app);
+        ux(app);
         networkMode(app);
         storageOperations(app);
         observability(app);
@@ -58,6 +60,11 @@ public class HttpService {
         app.get("/", new FrontEnd());
 
         app.start(config.sbxServicePort);
+    }
+
+    private void ux(Javalin app) {
+        // List machines
+        app.get("/api/machines/list", new ListMachines(this.vmDataAccessService));
     }
 
     private void vmOperations(Javalin app) {
