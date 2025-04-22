@@ -61,7 +61,7 @@ and any other java application.
 
 ### Contribution guidelines ###
 
-* Make sure every machine added as seed has enough network adapter enabled
+* Make sure every machineRow added as seed has enough network adapter enabled
 * The seed VM must have only one disk connected, no multiple disks are allowed
 
 # Client 🎮

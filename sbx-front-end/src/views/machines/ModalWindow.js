@@ -67,14 +67,14 @@ const ModalWindow = ({
                         })}
 
                         {/* Draw each node */}
-                        {machines.map((machine, index) => {
+                        {machines.map((machineRow, index) => {
                             const {x, y} = getCoords(index, machines.length);
-                            const portLines = machine.ports.map(
+                            const portLines = machineRow.ports.map(
                                 (p) => `${p.name}:${p.hostPort}->${p.vmPort}`
                             );
 
                             return (
-                                <g key={machine.uuid}>
+                                <g key={machineRow.uuid}>
                                     <circle cx={x} cy={y} r={nodeRadius} fill="#007bff"/>
                                     <text
                                         x={x}
@@ -84,7 +84,7 @@ const ModalWindow = ({
                                         fill="white"
                                         fontWeight="bold"
                                     >
-                                        {machine.name}
+                                        {machineRow.name}
                                     </text>
                                     <text
                                         x={x}
@@ -93,7 +93,7 @@ const ModalWindow = ({
                                         fontSize="12"
                                         fill="white"
                                     >
-                                        {machine.vmIpAddress || "N/A"}
+                                        {machineRow.vmIpAddress || "N/A"}
                                     </text>
                                     {portLines.map((line, i) => (
                                         <text
@@ -122,7 +122,7 @@ const ModalWindow = ({
                             <CTableHeaderCell className="bg-body-tertiary">State</CTableHeaderCell>
                             <CTableHeaderCell className="bg-body-tertiary text-justify">
                                 <CIcon icon={cilPin}
-                                       title="Pin this machine to keep it running regardless of the client"/>
+                                       title="Pin this machineRow to keep it running regardless of the client"/>
                             </CTableHeaderCell>
                         </CTableRow>
                     </CTableHead>

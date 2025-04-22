@@ -4,6 +4,7 @@ package dev.donhk.database;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
+import dev.donhk.rest.StorageUnit;
 import org.tinylog.Logger;
 
 import java.sql.*;
@@ -36,11 +37,11 @@ public class VMDataAccessService {
      * @throws SQLException if the machine is not found or if a database error occurs during the removal process
      */
     public void removeMachine(String machineName) throws SQLException {
-        Machine machine = findMachine(machineName);
-        if (machine == null) throw new SQLException("No machine found: " + machineName);
-        insertMachineHist(machine.name);
-        dropRule(machine.name);
-        dropMachine(machine.name);
+        MachineRow machineRow = findMachine(machineName);
+        if (machineRow == null) throw new SQLException("No machine found: " + machineName);
+        insertMachineHist(machineRow.name());
+        dropRule(machineRow.uuid());
+        dropMachine(machineRow.uuid());
     }
 
     /**
@@ -271,28 +272,36 @@ public class VMDataAccessService {
      * <p>
      * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables
      * to fetch the machine metadata along with one associated rule (if any).
-     * If the machine exists, it returns a populated {@link Machine} object; otherwise, it returns {@code null}.
+     * If the machine exists, it returns a populated {@link MachineRow} object; otherwise, it returns {@code null}.
      * </p>
      *
-     * @param machineName the name of the machine to find
-     * @return a {@link Machine} object containing the machine's data and one associated rule, or {@code null} if not found
+     * @param vmId the name of the machine to find
+     * @return a {@link MachineRow} object containing the machine's data and one associated rule, or {@code null} if not found
      * @throws SQLException if a database access error occurs during the query
      */
-    public Machine findMachine(String machineName) throws SQLException {
-        String sql = "SELECT m.name,m.ipv4,m.state,m.created,r.hostport,r.guestport,m.network FROM MACHINES m left join rules r on(m.name=r.name) where m.name=?";
+    public MachineRow findMachine(String vmId) throws SQLException {
+        String sql = """
+                SELECT id as uuid,
+                       name,
+                       seed_name,
+                       snapshot,
+                       network,
+                       vm_ip_address,
+                       hostname,
+                       vm_hostname,
+                       machine_state,
+                       created_at,
+                       updated_at,
+                       locked
+                FROM virtual_machines 
+                where id=?
+                ORDER BY created_at asc
+                """;
         try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
-            ps.setString(1, machineName);
+            ps.setString(1, vmId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return new Machine(
-                            rs.getString("name"),
-                            rs.getString("ipv4"),
-                            rs.getString("state"),
-                            rs.getTimestamp("created"),
-                            rs.getInt("hostport"),
-                            rs.getInt("guestport"),
-                            rs.getString("network")
-                    );
+                    return DbUtils.resultSetToMachineRow(rs);
                 }
                 return null;
             }
@@ -326,30 +335,92 @@ public class VMDataAccessService {
      * Retrieves a list of all machines from the database, including their metadata and associated port forwarding rules.
      * <p>
      * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables to include rule data,
-     * and returns a list of {@link Machine} objects sorted by their creation time in ascending order.
+     * and returns a list of {@link MachineRow} objects sorted by their creation time in ascending order.
      * </p>
      *
-     * @return a list of {@link Machine} objects containing machine details and rule information (if any)
+     * @return a list of {@link MachineRow} objects containing machine details and rule information (if any)
      * @throws SQLException if a database access error occurs during the query
      */
     @SuppressWarnings("unused")
-    public List<Machine> machines() throws SQLException {
-        List<Machine> rows = new ArrayList<>();
-        String sql = "SELECT m.name,m.ipv4,m.state,m.created,r.hostport,r.guestport,m.network FROM MACHINES m left join rules r on(m.name=r.name) ORDER BY created asc";
-        try (Statement stmt = conn.getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+    public List<MachineRow> listAllVirtualMachines() throws SQLException {
+        List<MachineRow> rows = new ArrayList<>();
+        String sql = """
+                SELECT id as uuid,
+                       name,
+                       seed_name,
+                       snapshot,
+                       network,
+                       network_type,
+                       vm_ip_address,
+                       hostname,
+                       vm_hostname,
+                       machine_state,
+                       created_at,
+                       updated_at,
+                       locked
+                FROM virtual_machines 
+                ORDER BY created_at asc
+                """;
+        try (Connection connection = conn.getConnection();
+             Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                rows.add(new Machine(
-                        rs.getString("name"),
-                        rs.getString("ipv4"),
-                        rs.getString("state"),
-                        rs.getTimestamp("created"),
-                        rs.getInt("hostport"),
-                        rs.getInt("guestport"),
-                        rs.getString("network")
-                ));
+                rows.add(DbUtils.resultSetToMachineRow(rs));
             }
         }
         return rows;
+    }
+
+    public List<VMPortRow> listVmPorts(String vmId) throws SQLException {
+        List<VMPortRow> result = new LinkedList<>();
+        String sql = """
+                select vm_id as uuid,
+                       name,
+                       host_port,
+                       vm_port
+                from vm_ports 
+                where vm_id = ?
+                """;
+
+        try (Connection connection = conn.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, vmId);
+            try (ResultSet set = ps.executeQuery()) {
+                while (set.next()) {
+                    result.add(new VMPortRow(
+                            set.getString("uuid"),
+                            set.getString("name"),
+                            set.getInt("host_port"),
+                            set.getInt("vm_port")
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public List<StorageUnit> listStorageDisks(String vmId) throws SQLException {
+        List<StorageUnit> result = new LinkedList<>();
+        String sql = """
+                select vm_id as uuid,
+                       name,
+                       round(size_bytes / 1073741824.0) AS size_gb
+                from vm_storage_units 
+                where vm_id = ?
+                """;
+        try (Connection connection = conn.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, vmId);
+            try (ResultSet set = ps.executeQuery()) {
+                while (set.next()) {
+                    result.add(new StorageUnit(
+                            set.getString("name"),
+                            set.getString("size_gb")
+                    ));
+                }
+            }
+        }
+        return result;
     }
 
     /**
