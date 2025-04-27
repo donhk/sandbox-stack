@@ -15,6 +15,12 @@ public class Config implements Runnable {
     @CommandLine.Option(names = {"-p", "--db-user"}, description = "database username")
     public String dbUser = "dbmaster";
 
+    @CommandLine.Option(names = {"-r", "--db-reset"}, description = "reset database schema")
+    public boolean dbReset = false;
+
+    @CommandLine.Option(names = {"-ss", "--sql-seeds"}, description = "insert SQL seeds")
+    public boolean dbSqlSeed = false;
+
     @CommandLine.Option(names = {"-w", "--db-web-port"}, description = "database web port")
     public int webPort = 8082;
 

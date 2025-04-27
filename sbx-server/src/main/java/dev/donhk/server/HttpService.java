@@ -47,6 +47,13 @@ public class HttpService {
                 }
         );
 
+        // 💬 ADD THIS
+        app.before(ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Allow React dev server
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        });
+
         Logger.info("web server started at: {}", address);
 
         // REST API endpoint

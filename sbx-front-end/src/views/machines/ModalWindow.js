@@ -41,7 +41,7 @@ const ModalWindow = ({
             size="xl"
         >
             <CModalHeader>
-                <CModalTitle>Machines in network: {machines[0]?.network || "Unknown"}</CModalTitle>
+                <CModalTitle>Machines in network: {machines[0]?.network.networkName || "Unknown"}</CModalTitle>
             </CModalHeader>
             <CModalBody>
                 <div style={{textAlign: "center"}}>

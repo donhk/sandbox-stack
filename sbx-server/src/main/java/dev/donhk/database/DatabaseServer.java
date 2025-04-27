@@ -5,7 +5,6 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.helpers.Utils;
-import dev.donhk.pojos.HostPortStatus;
 import org.h2.tools.Server;
 import org.tinylog.Logger;
 
@@ -21,18 +20,12 @@ public class DatabaseServer {
     private Server webServer = null;
     private Server tcpServer = null;
 
-    private final boolean reset;
     private final CountDownLatch latch = new CountDownLatch(2);
     private final AtomicBoolean startError = new AtomicBoolean(false);
     private final Config config;
 
-    public DatabaseServer(Config config, boolean reset) {
-        this.config = config;
-        this.reset = reset;
-    }
-
     public DatabaseServer(Config config) {
-        this(config, true);
+        this.config = config;
     }
 
     /**
@@ -92,7 +85,7 @@ public class DatabaseServer {
 
         setupConnectionPool();
         // Run after pool is created
-        //initDBSchema();
+        initDBSchema();
     }
 
     /**
@@ -152,7 +145,7 @@ public class DatabaseServer {
      */
     private void initDBSchema() throws SQLException, IOException {
         try (Connection conn = getDataSource().getConnection()) {
-            if (reset) {
+            if (this.config.dbReset) {
                 Logger.info("rdbms schema refresh");
                 try (Statement stmt = conn.createStatement()) {
                     stmt.execute(Utils.resource2txt("dropschema.sql"));
@@ -163,12 +156,10 @@ public class DatabaseServer {
                 stmt.execute(Utils.resource2txt("schema.sql"));
             }
 
-            for (int port = this.config.sbxServiceLowPort; port < this.config.sbxServiceHighPort; port++) {
-                String sql = "merge into hostport (port,status) values (?,?)";
-                try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                    ps.setInt(1, port);
-                    ps.setString(2, HostPortStatus.FREE.name());
-                    ps.executeUpdate();
+            if (this.config.dbSqlSeed) {
+                Logger.info("rdbms inserting seeds");
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute(Utils.resource2txt("sql_seed.sql"));
                 }
             }
         }
