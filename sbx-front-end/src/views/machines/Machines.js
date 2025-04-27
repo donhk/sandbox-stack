@@ -19,6 +19,28 @@ import {config} from 'src/config';
 import axios from "axios";
 import {useDispatch, useSelector} from "react-redux";
 
+function formatTimestamp(timestampMs) {
+    const now = Date.now();
+    let diffSeconds = Math.floor((now - timestampMs) / 1000);
+
+    if (diffSeconds < 0) {
+        return 'just now';
+    }
+
+    const hours = Math.floor(diffSeconds / 3600);
+    diffSeconds %= 3600;
+    const minutes = Math.floor(diffSeconds / 60);
+    const seconds = diffSeconds % 60;
+
+    let parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+    return parts.join(' ') + ' ago';
+}
+
+
 function formatPortMappings(mappings) {
     return mappings
         .map(({name, hostPort, vmPort}) => `${name}:${hostPort}:${vmPort}`)
@@ -77,7 +99,7 @@ const Machines = () => {
         setLockingVm(prev => new Map(prev).set(machineRow.uuid, true))
 
         try {
-            const result = await lockTable(machineRow, isChecked) // pass checked state if needed
+            const result = await lockTable(machineRow, isChecked)
             setLockedVm(prev => new Map(prev).set(machineRow.uuid, result));
         } finally {
             setLockingVm(prev => new Map(prev).set(machineRow.uuid, false))
@@ -175,7 +197,7 @@ const Machines = () => {
                                         {dayjs(item.createdAt).format(format)}
                                     </CTableDataCell>
                                     <CTableDataCell className="text-justify">
-                                        {item.updatedAt}
+                                        {formatTimestamp(item.updatedAt)}
                                     </CTableDataCell>
                                     <CTableDataCell className="text-justify text-info">
                                         {formatDiskSizes(item.storageUnits)}

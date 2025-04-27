@@ -9,6 +9,7 @@ import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
 import dev.donhk.web.rest.observability.GetOperationState;
 import dev.donhk.web.rest.ux.ListMachines;
+import dev.donhk.web.rest.vm.Pin;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
@@ -47,13 +48,6 @@ public class HttpService {
                 }
         );
 
-        // 💬 ADD THIS
-        app.before(ctx -> {
-            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Allow React dev server
-            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        });
-
         Logger.info("web server started at: {}", address);
 
         // REST API endpoint
@@ -65,6 +59,21 @@ public class HttpService {
 
         // Default route (optional)
         app.get("/", new FrontEnd());
+
+        // CORS Setup
+        app.before(ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Allow React dev server
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        });
+
+        // Respond to preflight OPTIONS requests
+        app.options("/*", ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000");
+            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            ctx.status(204); // No content for preflight
+        });
 
         app.start(config.sbxServicePort);
     }
@@ -92,6 +101,9 @@ public class HttpService {
         app.post("/api/machine/start", ctx -> {
             // expects JSON body: StartMachineRequest
         });
+
+        // Pin machine
+        app.put("/api/machine/pin", new Pin(this.vmDataAccessService));
 
         // Update a machine
         app.put("/api/machine", ctx -> {

@@ -1,8 +1,8 @@
 package dev.donhk.web.rest.observability;
 
-import dev.donhk.rest.GetOperationStateRequest;
-import dev.donhk.rest.GetOperationStateResponse;
-import dev.donhk.rest.OperationState;
+import dev.donhk.rest.operations.GetOperationStateRequest;
+import dev.donhk.rest.operations.GetOperationStateResponse;
+import dev.donhk.rest.types.OperationState;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
