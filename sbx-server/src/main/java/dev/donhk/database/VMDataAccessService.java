@@ -4,8 +4,7 @@ package dev.donhk.database;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
-import dev.donhk.rest.StorageUnit;
-import org.tinylog.Logger;
+import dev.donhk.rest.types.StorageUnit;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -20,6 +19,178 @@ public class VMDataAccessService {
         this.pool = pool;
         this.config = config;
     }
+
+    /**
+     * Retrieves a machine and its associated port forwarding rule from the database.
+     * <p>
+     * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables
+     * to fetch the machine metadata along with one associated rule (if any).
+     * If the machine exists, it returns a populated {@link MachineRow} object; otherwise, it returns {@code null}.
+     * </p>
+     *
+     * @param vmId the name of the machine to find
+     * @return a {@link MachineRow} object containing the machine's data and one associated rule, or {@code null} if not found
+     * @throws SQLException if a database access error occurs during the query
+     */
+    public MachineRow findMachine(Connection connection, String vmId) throws SQLException {
+        String sql = """
+                SELECT id as uuid,
+                       name,
+                       seed_name,
+                       snapshot,
+                       network,
+                       network_type,
+                       vm_ip_address,
+                       hostname,
+                       vm_hostname,
+                       machine_state,
+                       created_at,
+                       updated_at,
+                       locked
+                FROM virtual_machines
+                where id=?
+                ORDER BY created_at asc
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, vmId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return MachineRow.fromResultSet(rs);
+                }
+                return null;
+            }
+        }
+    }
+
+    public MachineRow findMachine(String vmId) throws SQLException {
+        try (Connection connection = pool.getConnection()) {
+            return findMachine(connection, vmId);
+        }
+    }
+
+    /**
+     * Retrieves a list of all machines from the database, including their metadata and associated port forwarding rules.
+     * <p>
+     * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables to include rule data,
+     * and returns a list of {@link MachineRow} objects sorted by their creation time in ascending order.
+     * </p>
+     *
+     * @return a list of {@link MachineRow} objects containing machine details and rule information (if any)
+     * @throws SQLException if a database access error occurs during the query
+     */
+    @SuppressWarnings("unused")
+    public List<MachineRow> listAllVirtualMachines() throws SQLException {
+        List<MachineRow> rows = new ArrayList<>();
+        String sql = """
+                SELECT id as uuid,
+                       name,
+                       seed_name,
+                       snapshot,
+                       network,
+                       network_type,
+                       vm_ip_address,
+                       hostname,
+                       vm_hostname,
+                       machine_state,
+                       created_at,
+                       updated_at,
+                       locked
+                FROM virtual_machines
+                ORDER BY created_at asc
+                """;
+        try (Connection connection = pool.getConnection();
+             Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                rows.add(MachineRow.fromResultSet(rs));
+            }
+        }
+        return rows;
+    }
+
+    public List<VMPortRow> listVmPorts(String vmId) throws SQLException {
+        List<VMPortRow> result = new LinkedList<>();
+        String sql = """
+                select vm_id as uuid,
+                       name,
+                       host_port,
+                       vm_port
+                from vm_ports
+                where vm_id = ?
+                """;
+
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, vmId);
+            try (ResultSet set = ps.executeQuery()) {
+                while (set.next()) {
+                    result.add(new VMPortRow(
+                            set.getString("uuid"),
+                            set.getString("name"),
+                            set.getInt("host_port"),
+                            set.getInt("vm_port")
+                    ));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public List<StorageUnit> listStorageDisks(String vmId) throws SQLException {
+        List<StorageUnit> result = new LinkedList<>();
+        String sql = """
+                select vm_id as uuid,
+                       name,
+                       size_bytes
+                from vm_storage_units
+                where vm_id = ?
+                """;
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, vmId);
+            try (ResultSet set = ps.executeQuery()) {
+                while (set.next()) {
+                    result.add(new StorageUnit(
+                            set.getString("name"),
+                            set.getString("size_bytes")
+                    ));
+                }
+            }
+        }
+        return result;
+    }
+
+    public MachineRow updateVmLockState(String vmId, boolean state) throws SQLException {
+        String sql = """
+                    UPDATE virtual_machines
+                    SET locked = ?
+                    WHERE id = ?
+                """;
+        try (Connection connection = pool.getConnection()) {
+            try {
+                connection.setAutoCommit(false); // BEGIN TRANSACTION
+
+                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                    ps.setBoolean(1, state);
+                    ps.setString(2, vmId);
+                    ps.executeUpdate();
+                }
+
+                MachineRow result = this.findMachine(connection, vmId);
+
+                connection.commit();
+                return result;
+
+            } catch (Exception ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    // old code
 
     /**
      * Removes a machine and its associated data from the database.
@@ -268,47 +439,6 @@ public class VMDataAccessService {
     }
 
     /**
-     * Retrieves a machine and its associated port forwarding rule from the database.
-     * <p>
-     * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables
-     * to fetch the machine metadata along with one associated rule (if any).
-     * If the machine exists, it returns a populated {@link MachineRow} object; otherwise, it returns {@code null}.
-     * </p>
-     *
-     * @param vmId the name of the machine to find
-     * @return a {@link MachineRow} object containing the machine's data and one associated rule, or {@code null} if not found
-     * @throws SQLException if a database access error occurs during the query
-     */
-    public MachineRow findMachine(String vmId) throws SQLException {
-        String sql = """
-                SELECT id as uuid,
-                       name,
-                       seed_name,
-                       snapshot,
-                       network,
-                       vm_ip_address,
-                       hostname,
-                       vm_hostname,
-                       machine_state,
-                       created_at,
-                       updated_at,
-                       locked
-                FROM virtual_machines
-                where id=?
-                ORDER BY created_at asc
-                """;
-        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
-            ps.setString(1, vmId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return DbUtils.resultSetToMachineRow(rs);
-                }
-                return null;
-            }
-        }
-    }
-
-    /**
      * Checks whether a machine with the given name exists in the {@code machines} table.
      * <p>
      * Executes a {@code SELECT COUNT(1)} query to determine if a machine with the specified name is present.
@@ -329,98 +459,6 @@ public class VMDataAccessService {
         } catch (Exception ignored) {
         }
         return count > 0;
-    }
-
-    /**
-     * Retrieves a list of all machines from the database, including their metadata and associated port forwarding rules.
-     * <p>
-     * This method performs a LEFT JOIN between the {@code machines} and {@code rules} tables to include rule data,
-     * and returns a list of {@link MachineRow} objects sorted by their creation time in ascending order.
-     * </p>
-     *
-     * @return a list of {@link MachineRow} objects containing machine details and rule information (if any)
-     * @throws SQLException if a database access error occurs during the query
-     */
-    @SuppressWarnings("unused")
-    public List<MachineRow> listAllVirtualMachines() throws SQLException {
-        List<MachineRow> rows = new ArrayList<>();
-        String sql = """
-                SELECT id as uuid,
-                       name,
-                       seed_name,
-                       snapshot,
-                       network,
-                       network_type,
-                       vm_ip_address,
-                       hostname,
-                       vm_hostname,
-                       machine_state,
-                       created_at,
-                       updated_at,
-                       locked
-                FROM virtual_machines
-                ORDER BY created_at asc
-                """;
-        try (Connection connection = pool.getConnection();
-             Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                rows.add(DbUtils.resultSetToMachineRow(rs));
-            }
-        }
-        return rows;
-    }
-
-    public List<VMPortRow> listVmPorts(String vmId) throws SQLException {
-        List<VMPortRow> result = new LinkedList<>();
-        String sql = """
-                select vm_id as uuid,
-                       name,
-                       host_port,
-                       vm_port
-                from vm_ports
-                where vm_id = ?
-                """;
-
-        try (Connection connection = pool.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, vmId);
-            try (ResultSet set = ps.executeQuery()) {
-                while (set.next()) {
-                    result.add(new VMPortRow(
-                            set.getString("uuid"),
-                            set.getString("name"),
-                            set.getInt("host_port"),
-                            set.getInt("vm_port")
-                    ));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    public List<StorageUnit> listStorageDisks(String vmId) throws SQLException {
-        List<StorageUnit> result = new LinkedList<>();
-        String sql = """
-                select vm_id as uuid,
-                       name,
-                       size_bytes
-                from vm_storage_units
-                where vm_id = ?
-                """;
-        try (Connection connection = pool.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, vmId);
-            try (ResultSet set = ps.executeQuery()) {
-                while (set.next()) {
-                    result.add(new StorageUnit(
-                            set.getString("name"),
-                            set.getString("size_bytes")
-                    ));
-                }
-            }
-        }
-        return result;
     }
 
     /**
@@ -882,85 +920,4 @@ public class VMDataAccessService {
         return null;
     }
 
-    /**
-     * Retrieves the next unsent message for the specified virtual machine from the {@code messages} table.
-     * <p>
-     * This method queries the first message (ordered by ID) where {@code record_sent} is {@code "no"} for the given VM.
-     * If a message is found, it marks the message as sent using {@link #markMessageSent(int)} and returns its content.
-     * If no message is found or an error occurs, an empty string is returned.
-     * </p>
-     *
-     * @param vm the name of the virtual machine to retrieve the message for
-     * @return the content of the next unsent message, or an empty string if none is found or an error occurs
-     */
-    public String getVMMessage(String vm) {
-        final String sql = "SELECT id,message FROM messages where machine_name=? and record_sent=? order by id asc limit 1";
-        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
-            ps.setString(1, vm);
-            ps.setString(2, "no");
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String message = rs.getString("message");
-                    int id = rs.getInt("id");
-                    markMessageSent(id);
-                    return message;
-                }
-            }
-        } catch (SQLException ignored) {
-        }
-        return "";
-    }
-
-    /**
-     * Marks a message as sent in the {@code messages} table by updating its {@code record_sent} status to {@code "yes"}.
-     * <p>
-     * If the provided message ID is negative, the method returns immediately without performing any operation.
-     * Any exceptions encountered during the update are silently ignored.
-     * </p>
-     *
-     * @param id the ID of the message to mark as sent
-     */
-    public void markMessageSent(int id) {
-        if (id < 0) return;
-        try (PreparedStatement ps = pool.getConnection().prepareStatement("update messages set record_sent = ? where id=?")) {
-            ps.setString(1, "yes");
-            ps.setInt(2, id);
-            ps.execute();
-        } catch (Exception ignored) {
-        }
-    }
-
-    /**
-     * Deletes old sent messages from the {@code messages} table.
-     * <p>
-     * This method removes messages where the difference between the current time and the {@code record_time}
-     * exceeds 3 hours. Any exceptions encountered during the operation are silently ignored.
-     * </p>
-     */
-    public void purgeSentMessages() {
-        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete messages where datediff('HOUR', record_time, now())>3")) {
-            ps.execute();
-        } catch (Exception ignored) {
-        }
-    }
-
-    /**
-     * Inserts a new administrative message into the {@code messages} table for the specified virtual machine.
-     * <p>
-     * This method records the given message along with the associated VM name.
-     * Any {@link SQLException} encountered during the insert is silently ignored.
-     * </p>
-     *
-     * @param message the content of the message to insert
-     * @param vmname  the name of the virtual machine the message is associated with
-     */
-    public void insertAdminMessage(String message, String vmname) {
-        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into messages(machine_name,message) values (?,?)")) {
-            ps.setString(1, vmname);
-            ps.setString(2, message);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            Logger.warn("error", e);
-        }
-    }
 }

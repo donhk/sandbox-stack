@@ -39,6 +39,6 @@ CREATE TABLE if not exists virtual_machines
     machine_state   VARCHAR(20),    -- "RUNNING"
     created_at      TIMESTAMP,      -- UTC recommended
     updated_at      TIMESTAMP,      -- UTC recommended
-    locked BOOLEAN  DEFAULT FALSE   -- false
+    locked          BOOLEAN  DEFAULT FALSE   -- false
 );
 -- @formatter:on
