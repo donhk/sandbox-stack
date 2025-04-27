@@ -13,11 +13,11 @@ import java.util.*;
 
 public class VMDataAccessService {
 
-    private final HikariDataSource conn;
+    private final HikariDataSource pool;
     private final Config config;
 
-    public VMDataAccessService(HikariDataSource conn, Config config) {
-        this.conn = conn;
+    public VMDataAccessService(HikariDataSource pool, Config config) {
+        this.pool = pool;
         this.config = config;
     }
 
@@ -61,7 +61,7 @@ public class VMDataAccessService {
         final String sql = "select count(1) port from HOSTPORT where status=? and port=?";
         do {
             final int potentialFreePort = random.nextInt(this.config.sbxServiceHighPort - this.config.sbxServiceLowPort) + this.config.sbxServiceLowPort;
-            try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+            try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
                 ps.setString(1, HostPortStatus.FREE.name());
                 ps.setInt(2, potentialFreePort);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -86,7 +86,7 @@ public class VMDataAccessService {
      */
     public void insertMachine(String name, String ipv4, String state, String NATNetwork) throws SQLException {
         String sql = "insert into machines (name,ipv4,state,network) values (?,?,?,?)";
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, ipv4);
             ps.setString(3, state);
@@ -109,7 +109,7 @@ public class VMDataAccessService {
      */
     public void updateVmMeta(String name, String state, String vm) throws SQLException {
         String sql = "update machines set state=?,vm=? where name=?";
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
             ps.setString(1, state);
             ps.setString(2, vm);
             ps.setString(3, name);
@@ -129,7 +129,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the update
      */
     public void updateVmNetworkInfo(String name, String networkName) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update machines set network=? where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update machines set network=? where name=?")) {
             ps.setString(1, networkName);
             ps.setString(2, name);
             ps.executeUpdate();
@@ -147,7 +147,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the update
      */
     public void updateVmState(String name, String state) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update machines set state=? where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update machines set state=? where name=?")) {
             ps.setString(1, state);
             ps.setString(2, name);
             ps.executeUpdate();
@@ -166,7 +166,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the update
      */
     public void updateMachine(String name, String ipv4, String state) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update machines set ipv4=?,state=? where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update machines set ipv4=?,state=? where name=?")) {
             ps.setString(1, ipv4);
             ps.setString(2, state);
             ps.setString(3, name);
@@ -189,7 +189,7 @@ public class VMDataAccessService {
      */
     public void insertRule(String machineName, String ruleName, int hostPort, int guestPort) throws SQLException {
         updatePort(hostPort, HostPortStatus.BUSY);
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into rules (name,rule_name,hostport,guestport) values (?,?,?,?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into rules (name,rule_name,hostport,guestport) values (?,?,?,?)")) {
             ps.setString(1, machineName);
             ps.setString(2, ruleName);
             ps.setInt(3, hostPort);
@@ -208,7 +208,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the insert
      */
     public void insertNATNetwork(String name) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into nats (network) values (?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into nats (network) values (?)")) {
             ps.setString(1, name);
             ps.executeUpdate();
         }
@@ -229,7 +229,7 @@ public class VMDataAccessService {
      */
     private void insertMachineHist(String machineName) throws SQLException {
         StringBuilder sbRules = new StringBuilder();
-        try (PreparedStatement psr = conn.getConnection().prepareStatement("select rule_name, hostport, guestport from rules where name = ?")) {
+        try (PreparedStatement psr = pool.getConnection().prepareStatement("select rule_name, hostport, guestport from rules where name = ?")) {
             psr.setString(1, machineName);
             try (ResultSet set = psr.executeQuery()) {
                 while (set.next()) {
@@ -241,7 +241,7 @@ public class VMDataAccessService {
         }
 
         String name = "", ipv4 = "", state = "", vm = "", created = "", network = "";
-        try (PreparedStatement psm = conn.getConnection().prepareStatement("select name, ipv4, state, vm, created, network from machines where name = ?")) {
+        try (PreparedStatement psm = pool.getConnection().prepareStatement("select name, ipv4, state, vm, created, network from machines where name = ?")) {
             psm.setString(1, machineName);
             try (ResultSet mSet = psm.executeQuery()) {
                 if (mSet.next()) {
@@ -255,7 +255,7 @@ public class VMDataAccessService {
             }
         }
 
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into machines_hist(name,ipv4,network,rules,created,vm,state) values (?,?,?,?,?,?,?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into machines_hist(name,ipv4,network,rules,created,vm,state) values (?,?,?,?,?,?,?)")) {
             ps.setString(1, name);
             ps.setString(2, ipv4);
             ps.setString(3, network);
@@ -293,11 +293,11 @@ public class VMDataAccessService {
                        created_at,
                        updated_at,
                        locked
-                FROM virtual_machines 
+                FROM virtual_machines
                 where id=?
                 ORDER BY created_at asc
                 """;
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
             ps.setString(1, vmId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -321,7 +321,7 @@ public class VMDataAccessService {
     public boolean machineExists(String machineName) {
         int count = 0;
         String sql = "SELECT count(1) total FROM MACHINES where name=?";
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
             ps.setString(1, machineName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) count = rs.getInt("total");
@@ -358,10 +358,10 @@ public class VMDataAccessService {
                        created_at,
                        updated_at,
                        locked
-                FROM virtual_machines 
+                FROM virtual_machines
                 ORDER BY created_at asc
                 """;
-        try (Connection connection = conn.getConnection();
+        try (Connection connection = pool.getConnection();
              Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 rows.add(DbUtils.resultSetToMachineRow(rs));
@@ -377,11 +377,11 @@ public class VMDataAccessService {
                        name,
                        host_port,
                        vm_port
-                from vm_ports 
+                from vm_ports
                 where vm_id = ?
                 """;
 
-        try (Connection connection = conn.getConnection();
+        try (Connection connection = pool.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, vmId);
             try (ResultSet set = ps.executeQuery()) {
@@ -404,18 +404,18 @@ public class VMDataAccessService {
         String sql = """
                 select vm_id as uuid,
                        name,
-                       round(size_bytes / 1073741824.0) AS size_gb
-                from vm_storage_units 
+                       size_bytes
+                from vm_storage_units
                 where vm_id = ?
                 """;
-        try (Connection connection = conn.getConnection();
+        try (Connection connection = pool.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, vmId);
             try (ResultSet set = ps.executeQuery()) {
                 while (set.next()) {
                     result.add(new StorageUnit(
                             set.getString("name"),
-                            set.getString("size_gb")
+                            set.getString("size_bytes")
                     ));
                 }
             }
@@ -433,7 +433,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the deletion
      */
     public void dropRule(String machineName) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("delete from rules where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete from rules where name=?")) {
             ps.setString(1, machineName);
             ps.executeUpdate();
         }
@@ -451,7 +451,7 @@ public class VMDataAccessService {
      */
     public List<Rule> getRules(String machineName) throws SQLException {
         List<Rule> result = new LinkedList<>();
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select rule_name,hostport,guestport from rules where name = ?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select rule_name,hostport,guestport from rules where name = ?")) {
             ps.setString(1, machineName);
             try (ResultSet set = ps.executeQuery()) {
                 while (set.next()) {
@@ -474,7 +474,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public Rule geSSHRule(String machineName) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select rule_name,hostport,guestport from rules where name = ? and rule_name like 'ssh%'")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select rule_name,hostport,guestport from rules where name = ? and rule_name like 'ssh%'")) {
             ps.setString(1, machineName);
             try (ResultSet set = ps.executeQuery()) {
                 if (set.next()) {
@@ -495,7 +495,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the deletion
      */
     private void dropMachine(String machineName) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("delete from machines where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete from machines where name=?")) {
             ps.setString(1, machineName);
             ps.executeUpdate();
         }
@@ -511,7 +511,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the deletion
      */
     public void dropNATNetwork(String NATNetwork) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("delete from nats where network=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete from nats where network=?")) {
             ps.setString(1, NATNetwork);
             ps.executeUpdate();
         }
@@ -528,7 +528,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the update
      */
     public void updatePort(int port, HostPortStatus newStatus) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update hostport set status=? where port=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update hostport set status=? where port=?")) {
             ps.setString(1, newStatus.name());
             ps.setInt(2, port);
             ps.executeUpdate();
@@ -550,7 +550,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during deletion or insertion
      */
     public void updateRule(String machineName, String oldRuleName, String newRuleName, int hostPort, int guestPort) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("delete from rules where rule_name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete from rules where rule_name=?")) {
             ps.setString(1, oldRuleName);
             ps.executeUpdate();
         }
@@ -572,11 +572,11 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during any step of the process
      */
     public void updateMachinesMeta(List<MachineMeta> machines) throws SQLException {
-        conn.getConnection().setAutoCommit(false);
-        try (PreparedStatement truncate = conn.getConnection().prepareStatement("truncate table machines_meta")) {
+        pool.getConnection().setAutoCommit(false);
+        try (PreparedStatement truncate = pool.getConnection().prepareStatement("truncate table machines_meta")) {
             truncate.executeUpdate();
         }
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into machines_meta(machine_prefix,machine_name,snapshot_name,cpu_count,memory,user,password,home,comments) values(?,?,?,?,?,?,?,?,?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into machines_meta(machine_prefix,machine_name,snapshot_name,cpu_count,memory,user,password,home,comments) values(?,?,?,?,?,?,?,?,?)")) {
             for (MachineMeta meta : machines) {
                 ps.setString(1, meta.machinePrefix);
                 ps.setString(2, meta.machineName);
@@ -591,8 +591,8 @@ public class VMDataAccessService {
             }
             ps.executeBatch();
         }
-        conn.getConnection().commit();
-        conn.getConnection().setAutoCommit(true);
+        pool.getConnection().commit();
+        pool.getConnection().setAutoCommit(true);
     }
 
     /**
@@ -607,10 +607,10 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the truncate or insert operations
      */
     public void updateMetaInfoFile(String digest, String content) throws SQLException {
-        try (PreparedStatement truncate = conn.getConnection().prepareStatement("truncate table meta_digest")) {
+        try (PreparedStatement truncate = pool.getConnection().prepareStatement("truncate table meta_digest")) {
             truncate.executeUpdate();
         }
-        try (PreparedStatement insert = conn.getConnection().prepareStatement("insert into meta_digest(digest,content) values(?,?)")) {
+        try (PreparedStatement insert = pool.getConnection().prepareStatement("insert into meta_digest(digest,content) values(?,?)")) {
             insert.setString(1, digest);
             insert.setString(2, content);
             insert.executeUpdate();
@@ -630,7 +630,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public boolean machineAndSnapExist(String machineName, String snapshot) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select count(1) total from machines_meta where machine_name=? and snapshot_name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select count(1) total from machines_meta where machine_name=? and snapshot_name=?")) {
             ps.setString(1, machineName);
             ps.setString(2, snapshot);
             try (ResultSet r = ps.executeQuery()) {
@@ -651,7 +651,7 @@ public class VMDataAccessService {
      */
     public Map<String, String> getMetaDigestInfo() throws SQLException {
         Map<String, String> m = new HashMap<>();
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select digest, content from meta_digest");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select digest, content from meta_digest");
              ResultSet r = ps.executeQuery()) {
             if (r.next()) {
                 m.put(r.getString("digest"), r.getString("content"));
@@ -672,7 +672,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public DigestRow getDigestRow() throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select digest, content, created from meta_digest");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select digest, content, created from meta_digest");
              ResultSet r = ps.executeQuery()) {
             if (r.next()) {
                 return new DigestRow(r.getString("digest"), r.getString("created"), r.getString("content"));
@@ -691,7 +691,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the insert
      */
     public void registerOperation(String operation) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into history(operation) values(?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into history(operation) values(?)")) {
             ps.setString(1, operation);
             ps.executeUpdate();
         }
@@ -709,7 +709,7 @@ public class VMDataAccessService {
      */
     public List<MachineMeta> getMachinesMetaInfo() throws SQLException {
         List<MachineMeta> meta = new ArrayList<>();
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select machine_prefix,machine_name,snapshot_name,cpu_count,memory,user,password,home,comments from machines_meta");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select machine_prefix,machine_name,snapshot_name,cpu_count,memory,user,password,home,comments from machines_meta");
              ResultSet r = ps.executeQuery()) {
             while (r.next()) {
                 meta.add(new MachineMeta(
@@ -741,7 +741,7 @@ public class VMDataAccessService {
      */
     public List<MachineHistRow> getMachinesHistPreview() throws SQLException {
         List<MachineHistRow> meta = new ArrayList<>();
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select name,ipv4,network,rules,created,vm,state,destroyed from machines_hist order by destroyed desc limit 30");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select name,ipv4,network,rules,created,vm,state,destroyed from machines_hist order by destroyed desc limit 30");
              ResultSet r = ps.executeQuery()) {
             while (r.next()) {
                 meta.add(new MachineHistRow(
@@ -769,7 +769,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public int getTotalMachinesHist() throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select count(1) total from machines_hist");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select count(1) total from machines_hist");
              ResultSet r = ps.executeQuery()) {
             return r.next() ? r.getInt("total") : 0;
         }
@@ -785,7 +785,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public int getTotalUpdatesServed() throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select count(1) total from history");
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select count(1) total from history");
              ResultSet r = ps.executeQuery()) {
             return r.next() ? r.getInt("total") : 0;
         }
@@ -805,7 +805,7 @@ public class VMDataAccessService {
     public List<ActiveMachineRow> getActiveMachines() throws SQLException {
         List<ActiveMachineRow> meta = new ArrayList<>();
         final String sql = "select m.name,ipv4,state,network,vm,created,count(1) rules from machines m join rules r on (m.name=r.name) group by m.name order by created desc";
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql); ResultSet r = ps.executeQuery()) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql); ResultSet r = ps.executeQuery()) {
             while (r.next()) {
                 meta.add(new ActiveMachineRow(
                         r.getString("name"),
@@ -832,7 +832,7 @@ public class VMDataAccessService {
      * @throws SQLException if a database access error occurs during the query
      */
     public String getPortStatus(int port) throws SQLException {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select status from hostport where port=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select status from hostport where port=?")) {
             ps.setInt(1, port);
             try (ResultSet r = ps.executeQuery()) {
                 return r.next() ? r.getString("status") : null;
@@ -852,7 +852,7 @@ public class VMDataAccessService {
      */
     public void pollMachine(String vm) {
         if (vm == null) return;
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update machines set updated = ? where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update machines set updated = ? where name=?")) {
             ps.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(2, vm);
             ps.execute();
@@ -872,7 +872,7 @@ public class VMDataAccessService {
      * @return the {@link Timestamp} of the last update, or {@code null} if not found or an error occurs
      */
     public Timestamp getMachinePoll(String name) {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("select updated from machines where name=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("select updated from machines where name=?")) {
             ps.setString(1, name);
             try (ResultSet r = ps.executeQuery()) {
                 return r.next() ? r.getTimestamp("updated") : null;
@@ -895,7 +895,7 @@ public class VMDataAccessService {
      */
     public String getVMMessage(String vm) {
         final String sql = "SELECT id,message FROM messages where machine_name=? and record_sent=? order by id asc limit 1";
-        try (PreparedStatement ps = conn.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement(sql)) {
             ps.setString(1, vm);
             ps.setString(2, "no");
             try (ResultSet rs = ps.executeQuery()) {
@@ -922,7 +922,7 @@ public class VMDataAccessService {
      */
     public void markMessageSent(int id) {
         if (id < 0) return;
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("update messages set record_sent = ? where id=?")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("update messages set record_sent = ? where id=?")) {
             ps.setString(1, "yes");
             ps.setInt(2, id);
             ps.execute();
@@ -938,7 +938,7 @@ public class VMDataAccessService {
      * </p>
      */
     public void purgeSentMessages() {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("delete messages where datediff('HOUR', record_time, now())>3")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("delete messages where datediff('HOUR', record_time, now())>3")) {
             ps.execute();
         } catch (Exception ignored) {
         }
@@ -955,7 +955,7 @@ public class VMDataAccessService {
      * @param vmname  the name of the virtual machine the message is associated with
      */
     public void insertAdminMessage(String message, String vmname) {
-        try (PreparedStatement ps = conn.getConnection().prepareStatement("insert into messages(machine_name,message) values (?,?)")) {
+        try (PreparedStatement ps = pool.getConnection().prepareStatement("insert into messages(machine_name,message) values (?,?)")) {
             ps.setString(1, vmname);
             ps.setString(2, message);
             ps.executeUpdate();
