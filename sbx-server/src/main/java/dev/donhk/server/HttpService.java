@@ -1,14 +1,15 @@
 package dev.donhk.server;
 
+import akka.actor.ActorRef;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.zaxxer.hikari.HikariDataSource;
-import dev.donhk.database.VMDataAccessService;
+import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
 import dev.donhk.web.rest.observability.GetOperationState;
 import dev.donhk.web.rest.ux.ListMachines;
+import dev.donhk.web.rest.vm.GetVm;
 import dev.donhk.web.rest.vm.Pin;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -17,14 +18,14 @@ import org.tinylog.Logger;
 
 public class HttpService {
 
+    private final ActorRef vboxActor;
     private final Config config;
-    private final String address;
-    private final VMDataAccessService vmDataAccessService;
+    private final DBService db;
 
-    public HttpService(Config config, HikariDataSource conn) {
+    public HttpService(Config config, DBService db, ActorRef vboxActor) {
+        this.db = db;
         this.config = config;
-        this.vmDataAccessService = new VMDataAccessService(conn, config);
-        address = "http://localhost:" + config.sbxServicePort;
+        this.vboxActor = vboxActor;
     }
 
     public void startServer() {
@@ -47,8 +48,6 @@ public class HttpService {
                     config.jsonMapper(mapper);
                 }
         );
-
-        Logger.info("web server started at: {}", address);
 
         // REST API endpoint
         vmOperations(app);
@@ -75,12 +74,14 @@ public class HttpService {
             ctx.status(204); // No content for preflight
         });
 
+        Logger.info("Sandboxer Service Started at http://0.0.0.0:{}", config.sbxServicePort);
         app.start(config.sbxServicePort);
     }
 
     private void ux(Javalin app) {
         // List machines
-        app.get("/api/machines/list", new ListMachines(this.vmDataAccessService));
+        app.get("/api/machines/list", new ListMachines(this.db));
+        app.get("/api/vm-seeds/list", new ListMachines(this.db));
     }
 
     private void vmOperations(Javalin app) {
@@ -90,12 +91,7 @@ public class HttpService {
         });
 
         // Get machine info
-        app.get("/api/machine/{uuid}", ctx -> {
-            // expects query param or JSON body: GetMachineRequest (uuid)
-            String uuid = ctx.pathParam("uuid");
-            // Now use `uuid` however you need
-            ctx.result("Received machine UUID: " + uuid);
-        });
+        app.get("/api/machine/{uuid}", new GetVm(this.db));
 
         // Start a machine
         app.post("/api/machine/start", ctx -> {
@@ -103,7 +99,7 @@ public class HttpService {
         });
 
         // Pin machine
-        app.put("/api/machine/pin", new Pin(this.vmDataAccessService));
+        app.put("/api/machine/pin", new Pin(this.db));
 
         // Update a machine
         app.put("/api/machine", ctx -> {

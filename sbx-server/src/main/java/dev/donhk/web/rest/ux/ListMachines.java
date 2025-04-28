@@ -1,27 +1,24 @@
 package dev.donhk.web.rest.ux;
 
-import dev.donhk.database.VMDataAccessService;
+import dev.donhk.database.DBService;
+import dev.donhk.database.DbUtils;
 import dev.donhk.pojos.MachineRow;
-import dev.donhk.pojos.VMPortRow;
 import dev.donhk.rest.types.Machine;
-import dev.donhk.rest.types.Network;
-import dev.donhk.rest.types.Port;
-import dev.donhk.rest.types.StorageUnit;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class ListMachines implements Handler {
 
-    private final VMDataAccessService vmDataAccessService;
+    private final DBService db;
 
-    public ListMachines(VMDataAccessService vmDataAccessService) {
-        this.vmDataAccessService = vmDataAccessService;
+    public ListMachines(DBService db) {
+        this.db = db;
     }
 
     @Override
@@ -44,32 +41,13 @@ public class ListMachines implements Handler {
             "locked": false,
         },
      */
-        Logger.info("List machines started");
         List<Machine> machines = new ArrayList<>();
-        List<MachineRow> machineRowList = vmDataAccessService.listAllVirtualMachines();
-        Logger.info("Machines: " + machineRowList.size());
-        for (MachineRow machineRow : machineRowList) {
-            Logger.info("Getting machine ports");
-            List<VMPortRow> vmPortRows = vmDataAccessService.listVmPorts(machineRow.uuid());
-            Logger.info("VM ports: " + vmPortRows.size());
-            List<StorageUnit> storageUnits = vmDataAccessService.listStorageDisks(machineRow.uuid());
-            Logger.info("Storage disks: " + storageUnits.size());
-            machines.add(new Machine(
-                    machineRow.uuid(),
-                    machineRow.name(),
-                    machineRow.seed_name(),
-                    machineRow.snapshot(),
-                    new Network(machineRow.networkType(), machineRow.network()),
-                    Optional.of(machineRow.vmIpAddress()),
-                    machineRow.hostname(),
-                    vmPortRows.stream().map(m -> new Port(m.name(), m.hostPort(), m.vmPort())).toList(),
-                    machineRow.vmHostname(),
-                    machineRow.machineState(),
-                    machineRow.createdAt(),
-                    machineRow.updatedAt(),
-                    storageUnits,
-                    machineRow.locked()
-            ));
+        for (MachineRow machineRow : db.listAllVirtualMachines()) {
+            try {
+                machines.add(DbUtils.machineRow2Machine(this.db, machineRow));
+            } catch (SQLException e) {
+                Logger.error("Error generating Machine from {}", machineRow, e);
+            }
         }
 
         ctx.json(machines);

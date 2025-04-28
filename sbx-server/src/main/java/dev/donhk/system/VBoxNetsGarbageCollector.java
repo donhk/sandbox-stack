@@ -3,7 +3,7 @@ package dev.donhk.system;
 import akka.actor.ActorRef;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxMessage;
-import dev.donhk.database.VMDataAccessService;
+import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.ActiveMachineRow;
 import org.tinylog.Logger;
@@ -33,7 +33,7 @@ import static dev.donhk.actors.Utilities.askSync;
  */
 public class VBoxNetsGarbageCollector {
 
-    private final VMDataAccessService VMDataAccessService;
+    private final DBService DBService;
     private final ActorRef vboxActor;
 
     /**
@@ -45,7 +45,7 @@ public class VBoxNetsGarbageCollector {
      */
     private VBoxNetsGarbageCollector(HikariDataSource conn, ActorRef vboxActor, Config config) {
         this.vboxActor = vboxActor;
-        this.VMDataAccessService = new VMDataAccessService(conn, config);
+        this.DBService = new DBService(conn, config);
     }
 
     /**
@@ -83,14 +83,14 @@ public class VBoxNetsGarbageCollector {
     private void cleanTrash() {
         Logger.info("Looking for dangling networks from VirtualBox");
         try {
-            final List<ActiveMachineRow> machines = VMDataAccessService.getActiveMachines();
+            final List<ActiveMachineRow> machines = DBService.getActiveMachines();
             Logger.info("{} actives machines found", machines.size());
             final List<String> unusedNetworks = askSync(vboxActor, new VBoxMessage.DelDanglingNetsRequest(machines));
             Logger.info("{} dangling networks found", machines.size());
             for (String unusedNetwork : unusedNetworks) {
                 try {
                     Logger.info("Removing network {} metadata from database", unusedNetwork);
-                    VMDataAccessService.dropNATNetwork(unusedNetwork);
+                    DBService.dropNATNetwork(unusedNetwork);
                 } catch (Exception e) {
                     Logger.warn("Unexpected error while purging network {} message {}", unusedNetwork, e.getMessage(), e);
                 }

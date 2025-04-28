@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxActor;
+import dev.donhk.database.DBService;
 import dev.donhk.database.DatabaseServer;
 import dev.donhk.config.Config;
 import dev.donhk.helpers.LoggingInitializer;
@@ -51,7 +52,8 @@ public class SandboxerApp {
     }
 
     private void startHttpEndpoints(HikariDataSource conn) {
-        final HttpService http = new HttpService(this.config, conn);
+        final DBService db = new DBService(conn, config);
+        final HttpService http = new HttpService(this.config, db, this.vboxActor);
         http.startServer();
     }
 

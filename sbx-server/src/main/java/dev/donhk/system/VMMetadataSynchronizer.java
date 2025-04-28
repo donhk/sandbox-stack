@@ -3,7 +3,7 @@ package dev.donhk.system;
 import akka.actor.ActorRef;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.actor.VBoxMessage;
-import dev.donhk.database.VMDataAccessService;
+import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.config.ConfigFileFactory;
 import dev.donhk.helpers.Utils;
@@ -31,7 +31,7 @@ import static dev.donhk.actors.Utilities.askSync;
 public class VMMetadataSynchronizer {
 
     private final ActorRef vboxActor;
-    private final VMDataAccessService VMDataAccessService;
+    private final DBService DBService;
 
     /**
      * Shared blocking queue to receive refresh instructions from other modules.
@@ -48,7 +48,7 @@ public class VMMetadataSynchronizer {
      */
     private VMMetadataSynchronizer(HikariDataSource conn, ActorRef vboxActor, Config config) {
         this.vboxActor = vboxActor;
-        this.VMDataAccessService = new VMDataAccessService(conn, config);
+        this.DBService = new DBService(conn, config);
     }
 
     /**
@@ -100,7 +100,7 @@ public class VMMetadataSynchronizer {
 
         Logger.info("Updating VM metadata in the database");
         try {
-            VMDataAccessService.updateMachinesMeta(machines);
+            DBService.updateMachinesMeta(machines);
         } catch (SQLException e) {
             Logger.error("Error updating VM metadata in database", e);
             Thread.currentThread().interrupt();
@@ -111,7 +111,7 @@ public class VMMetadataSynchronizer {
             ConfigFileFactory factory = new ConfigFileFactory(machines);
             String content = Utils.base64Encode(factory.createMetaInfoFile());
             String digest = Utils.digest(content);
-            VMDataAccessService.updateMetaInfoFile(digest, content);
+            DBService.updateMetaInfoFile(digest, content);
         } catch (SQLException e) {
             Logger.error("Error updating meta-info file content", e);
             Thread.currentThread().interrupt();

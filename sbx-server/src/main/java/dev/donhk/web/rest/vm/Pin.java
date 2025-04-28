@@ -1,6 +1,6 @@
 package dev.donhk.web.rest.vm;
 
-import dev.donhk.database.VMDataAccessService;
+import dev.donhk.database.DBService;
 import dev.donhk.pojos.MachineRow;
 import dev.donhk.rest.operations.vm.PinMachineRequest;
 import dev.donhk.rest.operations.vm.PinMachineResponse;
@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 public class Pin implements Handler {
 
-    private final VMDataAccessService vmDataAccessService;
+    private final DBService DBService;
 
-    public Pin(VMDataAccessService vmDataAccessService) {
-        this.vmDataAccessService = vmDataAccessService;
+    public Pin(DBService DBService) {
+        this.DBService = DBService;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class Pin implements Handler {
         Logger.info("Request: {}", request);
         TimeUnit.MILLISECONDS.sleep(15_000);
         Logger.info("Locked: {} {} -> {}", request.uuid(), !request.locked(), request.locked());
-        MachineRow row = this.vmDataAccessService.updateVmLockState(request.uuid(), request.locked());
+        MachineRow row = this.DBService.updateVmLockState(request.uuid(), request.locked());
         ctx.json(new PinMachineResponse(request.uuid(), request.name(), request.network(), row.locked()));
     }
 }
