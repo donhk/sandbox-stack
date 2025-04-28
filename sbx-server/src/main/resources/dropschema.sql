@@ -5,3 +5,5 @@ drop index if exists idx_vm_ports_vm_id;
 drop table if exists vm_ports;
 
 drop table if exists virtual_machines;
+
+drop table if exists vm_records;

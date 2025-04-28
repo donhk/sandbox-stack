@@ -41,4 +41,17 @@ CREATE TABLE if not exists virtual_machines
     updated_at      TIMESTAMP,      -- UTC recommended
     locked          BOOLEAN  DEFAULT FALSE   -- false
 );
--- @formatter:on
+
+
+CREATE TABLE if not exists vm_seeds
+(
+    prefix VARCHAR(100) NOT NULL,
+    vm_user VARCHAR(100) NOT NULL,
+    vm_pass VARCHAR(255) NOT NULL,
+    home VARCHAR(500) NOT NULL,
+    snapshot_name VARCHAR(100) NOT NULL,
+    snapshot_cpus INT NOT NULL,
+    snapshot_ram_mb INT NOT NULL,
+    snapshot_comments TEXT,
+    PRIMARY KEY (prefix, snapshot_name)
+);

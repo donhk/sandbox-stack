@@ -10,12 +10,12 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
-public class VMDataAccessService {
+public class DBService {
 
     private final HikariDataSource pool;
     private final Config config;
 
-    public VMDataAccessService(HikariDataSource pool, Config config) {
+    public DBService(HikariDataSource pool, Config config) {
         this.pool = pool;
         this.config = config;
     }

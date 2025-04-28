@@ -141,3 +141,17 @@ VALUES ('mch-001', 'ssh', 2222, 22),
        ('mch-029', 'ssh', 2250, 22),
 
        ('mch-030', 'ssh', 2251, 22);
+
+
+INSERT INTO vm_seeds
+(prefix, vm_user, vm_pass, home, snapshot_name, snapshot_cpus, snapshot_ram_mb, snapshot_comments)
+VALUES ('windows', 'user1', 'password1', 'C:\\users\\user1', 'w1c1', 12, 12323, 'Special Snapshot Comments'),
+       ('windows', 'user1', 'password1', 'C:\\users\\user1', 'w1c2', 6, 16000, 'Special Snapshot Comments'),
+
+       ('linux1', 'user1', 'password1', '/home/user1', 'l1c1', 16, 18000, 'Special Snapshot Comments'),
+       ('linux2', 'user1', 'password1', '/home/user1', 'l1c2', 8, 19000, 'Special Snapshot Comments3'),
+       ('linux3', 'user1', 'password1', '/home/user1', 'l1c2', 8, 19000, 'Special Snapshot Comments2'),
+       ('linux4', 'user1', 'password1', '/home/user1', 'l1c3', 9, 12000, 'Special Snapshot Comments1'),
+
+       ('windows2', 'user1', 'password1', 'C:\\users\\user1', 'w1c1', 12, 12323, 'Special Snapshot Comments'),
+       ('windows2', 'user1', 'password1', 'C:\\users\\user1', 'w1c2', 6, 16000, 'Special Snapshot Comments');

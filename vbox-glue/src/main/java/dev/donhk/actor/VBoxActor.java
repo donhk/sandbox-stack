@@ -32,12 +32,10 @@ public class VBoxActor extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder()
                 .match(VBoxMessage.PingRequest.class, msg -> {
-                    System.out.println("Received1: " + msg.name() + " " + msg.age());
-                    getSender().tell(new VBoxMessage.PingResponse("b", 1), getSelf());
+                    getSender().tell(new VBoxMessage.PingResponse(msg.name(), msg.age()), getSelf());
                 })
                 .match(VBoxMessage.PingRequest2.class, msg -> {
-                    System.out.println("Received2: " + msg.name() + " " + msg.age());
-                    getSender().tell(new VBoxMessage.PingResponse2("a", 1), getSelf());
+                    getSender().tell(new VBoxMessage.PingResponse2(msg.name(), msg.age()), getSelf());
                 })
                 .match(VBoxMessage.ListMachinesRequest.class, request -> getSender().tell(new ListMachines(this.boxManager).dispatch(), getSelf()))
                 .match(VBoxMessage.DelDanglingNetsRequest.class, request -> getSender().tell(new DelDanglingNets(this.boxManager, request.activeMachineRows()).dispatch(), getSelf()))
