@@ -1,20 +1,45 @@
-import {CCard, CCardBody, CCardHeader, CCol, CFormInput, CFormLabel, CRow} from "@coreui/react";
-import {useEffect, useState} from "react";
+import {CCard, CCardBody, CCardHeader, CCol, CFormInput, CRow, CSpinner} from "@coreui/react";
+import {useEffect} from "react";
+import axios from "axios";
+import {config} from "src/config";
+import {useDispatch, useSelector} from "react-redux";
+
+const fetchSettings = async () => {
+    try {
+        return (await axios.get(config.baseUrl + '/api/sbx-settings/list')).data;
+    } catch (error) {
+        console.error('Error:', error);
+        return [];
+    }
+};
 
 const SettingsComp = () => {
-    const [settings1, setSettings1] = useState("");
-    const [settings2, setSettings2] = useState("");
-
-    const loadSettings = async () => {
-        // Simulate fetching or loading settings
-        setSettings1("Test Default Value1");
-        setSettings2("Test Default Value2");
-    };
+    const dispatch = useDispatch();
+    const sbxSettings = useSelector((state) => state.sbxSettings);
 
     useEffect(() => {
-        loadSettings().then(_r => {
-        });
-    }, []); // empty dependency array = run once on component mount
+        (async () => {
+            const data = await fetchSettings();
+            dispatch({type: 'set', sbxSettings: data});
+        })();
+    }, [dispatch]);
+
+    // Prevent render until settings are loaded
+    if (!sbxSettings || !sbxSettings.dbName) {
+        return (
+            <>
+                <CCard>
+                    <CCardHeader>Settings</CCardHeader>
+                    <CCardBody>
+                        <div className="text-center">
+                            <CSpinner color="info"/>
+                        </div>
+                    </CCardBody>
+                </CCard>
+            </>
+        );
+    }
+
 
     return (
         <>
@@ -22,28 +47,67 @@ const SettingsComp = () => {
                 <CCardHeader>Settings</CCardHeader>
                 <CCardBody>
                     <CRow className="mb-3">
-                        <CFormLabel htmlFor="settings-1" className="col-sm-2 col-form-label">
-                            Settings  example  1:
-                        </CFormLabel>
-                        <CCol sm={5}>
+                        <CCol sm={2}>
+                            <strong>Database Name:</strong>
                             <CFormInput
                                 type="text"
-                                id="settings-1"
-                                value={settings2}
+                                value={sbxSettings.dbName}
+                                readOnly
+                                plainText
+                            />
+                        </CCol>
+                        <CCol sm={2}>
+                            <strong>Web Port:</strong>
+                            <CFormInput
+                                type="text"
+                                value={sbxSettings.webPort}
+                                readOnly
+                                plainText
+                            />
+                        </CCol>
+                        <CCol sm={2}>
+                            <strong>TCP Port:</strong>
+                            <CFormInput
+                                type="text"
+                                value={sbxSettings.tcpPort}
+                                readOnly
+                                plainText
+                            />
+                        </CCol>
+                        <CCol sm={2}>
+                            <strong>Service Port:</strong>
+                            <CFormInput
+                                type="text"
+                                value={sbxSettings.sbxServicePort}
+                                readOnly
+                                plainText
+                            />
+                        </CCol>
+                        <CCol sm={2}>
+                            <strong>Service Low Port:</strong>
+                            <CFormInput
+                                type="text"
+                                value={sbxSettings.sbxServiceLowPort}
+                                readOnly
+                                plainText
+                            />
+                        </CCol>
+                        <CCol sm={2}>
+                            <strong>Service High Port:</strong>
+                            <CFormInput
+                                type="text"
+                                value={sbxSettings.sbxServiceHighPort}
                                 readOnly
                                 plainText
                             />
                         </CCol>
                     </CRow>
-                    <CRow className="mb-3">
-                        <CFormLabel htmlFor="settings-2" className="col-sm-2 col-form-label">
-                            Settings1:
-                        </CFormLabel>
-                        <CCol sm={5}>
+                    <CRow>
+                        <CCol sm={12}>
+                            <strong>Build Info:</strong>
                             <CFormInput
                                 type="text"
-                                id="settings-2"
-                                value={settings2}
+                                value={sbxSettings.buildInfo}
                                 readOnly
                                 plainText
                             />

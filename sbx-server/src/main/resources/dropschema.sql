@@ -7,3 +7,5 @@ drop table if exists vm_ports;
 drop table if exists virtual_machines;
 
 drop table if exists vm_records;
+
+drop table if exists vm_seeds;

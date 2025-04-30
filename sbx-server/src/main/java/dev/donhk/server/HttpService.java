@@ -9,6 +9,8 @@ import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
 import dev.donhk.web.rest.observability.GetOperationState;
 import dev.donhk.web.rest.ux.ListMachines;
+import dev.donhk.web.rest.ux.ListSeeds;
+import dev.donhk.web.rest.ux.SbxSettings;
 import dev.donhk.web.rest.vm.GetVm;
 import dev.donhk.web.rest.vm.Pin;
 import io.javalin.Javalin;
@@ -81,7 +83,8 @@ public class HttpService {
     private void ux(Javalin app) {
         // List machines
         app.get("/api/machines/list", new ListMachines(this.db));
-        app.get("/api/vm-seeds/list", new ListMachines(this.db));
+        app.get("/api/vm-seeds/list", new ListSeeds(this.db));
+        app.get("/api/sbx-settings/list", new SbxSettings(this.config));
     }
 
     private void vmOperations(Javalin app) {
