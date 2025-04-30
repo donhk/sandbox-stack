@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
 import dev.donhk.rest.types.StorageUnit;
+import dev.donhk.rest.types.VMSnapshot;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -188,6 +189,29 @@ public class DBService {
                 connection.setAutoCommit(true);
             }
         }
+    }
+
+    public List<VMSnapshot> listSnapshots() throws SQLException {
+        List<VMSnapshot> rows = new ArrayList<>();
+        String sql = """
+                SELECT  prefix,
+                        vm_user,
+                        vm_pass,
+                        home,
+                        snapshot_name,
+                        snapshot_cpus,
+                        snapshot_ram_mb,
+                        snapshot_comments
+                FROM vm_seeds
+                ORDER BY prefix,snapshot_name asc
+                """;
+        try (Connection connection = pool.getConnection();
+             Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                rows.add(VMSnapshot.fromResultSet(rs));
+            }
+        }
+        return rows;
     }
 
     // old code

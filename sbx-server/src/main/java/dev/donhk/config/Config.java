@@ -1,7 +1,10 @@
 package dev.donhk.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import picocli.CommandLine;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Config implements Runnable {
     //
     // database information
@@ -9,15 +12,19 @@ public class Config implements Runnable {
     @CommandLine.Option(names = {"-d", "--db-name"}, description = "database name")
     public String dbName = "sandbox";
 
+    @JsonIgnore
     @CommandLine.Option(names = {"-u", "--db-pass"}, description = "database password")
     public String dbPass = "welcome";
 
+    @JsonIgnore
     @CommandLine.Option(names = {"-p", "--db-user"}, description = "database username")
     public String dbUser = "dbmaster";
 
+    @JsonIgnore
     @CommandLine.Option(names = {"-r", "--db-reset"}, description = "reset database schema")
     public boolean dbReset = false;
 
+    @JsonIgnore
     @CommandLine.Option(names = {"-ss", "--sql-seeds"}, description = "insert SQL seeds")
     public boolean dbSqlSeed = false;
 
@@ -32,7 +39,7 @@ public class Config implements Runnable {
     //
     @CommandLine.Option(names = {"-s", "--service-port"}, description = "Sandboxer Service port")
     public int sbxServicePort = 8008;
-    
+
     @CommandLine.Option(names = {"-l", "--service-low-port"}, description = "Sandboxer Service low port")
     public int sbxServiceLowPort = 11200;
 
@@ -43,7 +50,7 @@ public class Config implements Runnable {
     // Build details
     //
     @CommandLine.Option(names = {"-b", "--build-info"}, description = "Build information")
-    public String buildInfo;
+    public String buildInfo = "";
 
     @Override
     public void run() {
