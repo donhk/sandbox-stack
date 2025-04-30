@@ -11,8 +11,9 @@ import dev.donhk.web.rest.observability.GetOperationState;
 import dev.donhk.web.rest.ux.ListMachines;
 import dev.donhk.web.rest.ux.ListSeeds;
 import dev.donhk.web.rest.ux.SbxSettings;
+import dev.donhk.web.rest.vm.DeleteVm;
 import dev.donhk.web.rest.vm.GetVm;
-import dev.donhk.web.rest.vm.Pin;
+import dev.donhk.web.rest.vm.PinVm;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
@@ -102,7 +103,7 @@ public class HttpService {
         });
 
         // Pin machine
-        app.put("/api/machine/pin", new Pin(this.db));
+        app.put("/api/machine/pin", new PinVm(this.db));
 
         // Update a machine
         app.put("/api/machine", ctx -> {
@@ -110,9 +111,7 @@ public class HttpService {
         });
 
         // Delete a machine
-        app.delete("/api/machine", ctx -> {
-            // expects JSON body: DeleteMachineRequest
-        });
+        app.delete("/api/machine/{uuid}", new DeleteVm(this.vboxActor, this.db));
     }
 
     private void networkMode(Javalin app) {

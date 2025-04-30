@@ -9,13 +9,15 @@ import io.javalin.http.Handler;
 import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class Pin implements Handler {
+public class PinVm implements Handler {
 
     private final DBService DBService;
 
-    public Pin(DBService DBService) {
+    public PinVm(DBService DBService) {
         this.DBService = DBService;
     }
 
@@ -25,7 +27,11 @@ public class Pin implements Handler {
         Logger.info("Request: {}", request);
         TimeUnit.MILLISECONDS.sleep(15_000);
         Logger.info("Locked: {} {} -> {}", request.uuid(), !request.locked(), request.locked());
-        MachineRow row = this.DBService.updateVmLockState(request.uuid(), request.locked());
-        ctx.json(new PinMachineResponse(request.uuid(), request.name(), request.network(), row.locked()));
+        Optional<MachineRow> row = this.DBService.updateVmLockState(request.uuid(), request.locked());
+        if (row.isEmpty()) {
+            ctx.status(404).json(Collections.emptyMap());
+            return;
+        }
+        ctx.json(new PinMachineResponse(request.uuid(), request.name(), request.network(), row.get().locked()));
     }
 }
