@@ -9,6 +9,7 @@ import dev.donhk.rest.types.Network;
 import dev.donhk.rest.types.NetworkType;
 import io.javalin.http.Context;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.sql.Timestamp;
@@ -57,16 +58,18 @@ public class GetVmTest {
         DBService serviceMock = mock(DBService.class);
         Context ctx = mock(Context.class);
 
-        Mockito.mockStatic(DbUtils.class).when(() ->
-                DbUtils.machineRow2Machine(eq(serviceMock), eq(machineRow))
-        ).thenReturn(machine);
-
-        when(serviceMock.findMachine("mch-018")).thenReturn(machineRow);
+        when(serviceMock.findMachine("mch-018")).thenReturn(Optional.of(machineRow));
         when(ctx.pathParam("uuid")).thenReturn("mch-018");
 
-        GetVm getVm = new GetVm(serviceMock);
-        getVm.handle(ctx);
+        try (MockedStatic<DbUtils> mockedDbUtils = Mockito.mockStatic(DbUtils.class)) {
+            mockedDbUtils.when(() ->
+                    DbUtils.machineRow2Machine(eq(serviceMock), eq(machineRow))
+            ).thenReturn(machine);
 
-        verify(ctx).json(machine);
+            GetVm getVm = new GetVm(serviceMock);
+            getVm.handle(ctx);
+
+            verify(ctx).json(machine);
+        }
     }
 }
