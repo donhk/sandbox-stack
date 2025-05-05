@@ -11,6 +11,8 @@ import org.tinylog.Logger;
 import java.io.IOException;
 import java.sql.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -144,6 +146,8 @@ public class DatabaseServer {
      * @throws IOException  if there is an error reading the SQL script resources.
      */
     private void initDBSchema() throws SQLException, IOException {
+        Logger.info("Starting Database Initialization");
+        Instant now = Instant.now();
         try (Connection conn = getDataSource().getConnection()) {
             if (this.config.dbReset) {
                 Logger.info("rdbms schema refresh");
@@ -156,13 +160,25 @@ public class DatabaseServer {
                 stmt.execute(Utils.resource2txt("schema.sql"));
             }
 
+            conn.setAutoCommit(false);
             if (this.config.dbSqlSeed) {
-                Logger.info("rdbms inserting seeds");
                 try (Statement stmt = conn.createStatement()) {
+                    Logger.info("Inserting sql_seed.sql sample records");
                     stmt.execute(Utils.resource2txt("sql_seed.sql"));
                 }
+                try (Statement stmt = conn.createStatement()) {
+                    Logger.info("Inserting vms_history.sql sample records");
+                    stmt.execute(Utils.resource2txt("vms_history.sql"));
+                }
+                try (Statement stmt = conn.createStatement()) {
+                    Logger.info("Inserting resources_table.sql sample records");
+                    stmt.execute(Utils.resource2txt("resources_table.sql"));
+                }
             }
+            conn.commit();
+            conn.setAutoCommit(true);
         }
+        Logger.info("Finished Database Initialization {} ms", Duration.between(now, Instant.now()).toMillis());
     }
 
     @SuppressWarnings("unused")

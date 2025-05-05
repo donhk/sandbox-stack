@@ -1,7 +1,3 @@
---
--- New Tables
---
-
 -- table to keep track of the disks
 -- @formatter:off
 create table if not exists vm_storage_units
@@ -10,9 +6,7 @@ create table if not exists vm_storage_units
     name        VARCHAR(50) NOT NULL,
     size_bytes  BIGINT NOT NULL
 );
-
 CREATE INDEX IF NOT EXISTS idx_vm_storage_units_vm_id ON vm_storage_units(vm_id);
-
 
 -- table to keep track of vm ports
 create table if not exists vm_ports
@@ -42,7 +36,6 @@ CREATE TABLE if not exists virtual_machines
     locked          BOOLEAN  DEFAULT FALSE   -- false
 );
 
-
 CREATE TABLE if not exists vm_seeds
 (
     prefix VARCHAR(100) NOT NULL,
@@ -54,4 +47,25 @@ CREATE TABLE if not exists vm_seeds
     snapshot_ram_mb INT NOT NULL,
     snapshot_comments TEXT,
     PRIMARY KEY (prefix, snapshot_name)
+);
+
+CREATE TABLE if not exists resources_table
+(
+    resource        VARCHAR(50) NOT NULL,
+    created_at      TIMESTAMP NOT NULL,
+    usage           INT NOT NULL
+);
+
+CREATE TABLE if not exists vms_history
+(
+    deleted_at      TIMESTAMP       NOT NULL,
+    name            VARCHAR(100)    NOT NULL,   -- "Machine-R"
+    snapshot        VARCHAR(50),                -- "snap-018"
+    network         VARCHAR(50),                -- "network3"
+    network_type    VARCHAR(50)                 -- "NAT/HOST_ONLY/INTERNAL_NETWORK"
+);
+
+CREATE TABLE if not exists instances
+(
+    hostname        VARCHAR(50) NOT NULL
 );

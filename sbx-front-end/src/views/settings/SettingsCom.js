@@ -6,7 +6,7 @@ import {useDispatch, useSelector} from "react-redux";
 
 const fetchSettings = async () => {
     try {
-        return (await axios.get(config.baseUrl + '/api/sbx-settings/list')).data;
+        return (await axios.get(config.baseUrl + '/api/sbx-settings')).data;
     } catch (error) {
         console.error('Error:', error);
         return [];

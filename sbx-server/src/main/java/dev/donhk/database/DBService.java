@@ -213,4 +213,22 @@ public class DBService {
         return rows;
     }
 
+    public List<VMSnapshot> getLocalResources() throws SQLException {
+        List<VMSnapshot> rows = new ArrayList<>();
+        String sql = """
+                SELECT  resource,
+                        usage,
+                        created_at
+                FROM resources_table
+                ORDER BY resource,created_at
+                """;
+        try (Connection connection = pool.getConnection();
+             Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                rows.add(VMSnapshot.fromResultSet(rs));
+            }
+        }
+        return rows;
+    }
+
 }

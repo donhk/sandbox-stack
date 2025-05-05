@@ -11,6 +11,9 @@ subprojects {
     }
 
     dependencies {
+        implementation 'org.slf4j:jul-to-slf4j:2.0.9'
+        implementation 'org.tinylog:slf4j-tinylog:2.6.2'
+
         implementation 'org.tinylog:tinylog-api:2.6.2'
         implementation 'org.tinylog:tinylog-impl:2.6.2'
         implementation 'org.tinylog:slf4j-tinylog:2.6.2'
