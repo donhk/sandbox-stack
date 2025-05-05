@@ -9,3 +9,9 @@ drop table if exists virtual_machines;
 drop table if exists vm_records;
 
 drop table if exists vm_seeds;
+
+drop table if exists resources_table;
+
+drop table if exists vms_history;
+
+drop table if exists instances;

@@ -4,6 +4,7 @@ package dev.donhk.database;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
+import dev.donhk.rest.types.ResourceRow;
 import dev.donhk.rest.types.StorageUnit;
 import dev.donhk.rest.types.VMSnapshot;
 
@@ -208,6 +209,48 @@ public class DBService {
              Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 rows.add(VMSnapshot.fromResultSet(rs));
+            }
+        }
+        return rows;
+    }
+
+    public List<ResourceRow> getLocalResources(String resource, int granularity, int daysBack) throws SQLException {
+        List<ResourceRow> rows = new ArrayList<>();
+        String sql = """
+                SELECT
+                    FORMATDATETIME(
+                        TIMESTAMPADD(
+                            MINUTE,
+                            -MOD(MINUTE(created_at), 10),
+                            created_at
+                        ),
+                        'yyyy-MM-dd HH:mm'
+                    ) AS dt_min,
+                    AVG(usage) AS avg_usage
+                FROM resources_table
+                WHERE
+                    resource = ? AND
+                    created_at <= CURRENT_TIMESTAMP AND
+                    created_at >= DATEADD('DAY', ?, CURRENT_DATE)
+                GROUP BY
+                    FORMATDATETIME(
+                        TIMESTAMPADD(
+                            MINUTE,
+                            -MOD(MINUTE(created_at), 10),
+                            created_at
+                        ),
+                        'yyyy-MM-dd HH:mm'
+                    )
+                ORDER BY dt_min ASC;
+                """;
+        try (Connection connection = pool.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, resource);
+            stmt.setInt(2, daysBack);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    rows.add(ResourceRow.fromResultSet(rs));
+                }
             }
         }
         return rows;

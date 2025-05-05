@@ -1,6 +1,9 @@
 package dev.donhk.helpers;
 
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinylog.configuration.Configuration;
+
+import java.util.logging.LogManager;
 
 public class LoggingInitializer {
 
@@ -11,7 +14,16 @@ public class LoggingInitializer {
             return;
         }
 
+        // Redirect java.util.logging (JUL) to SLF4J
+        LogManager.getLogManager().reset();
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+
         Configuration.set("writer1", "console");
+        Configuration.set("writer1.ansi", "true");
+        Configuration.set("writer1.ansi.level", "info=green, warn=yellow, error=red");
+        Configuration.set("format", "{date:yyyy-MM-dd HH:mm:ss} [{thread}] {class}.{method}() [{level}] {message}");
+
         Configuration.set("writer2", "file");
         Configuration.set("writer2.file", "logs/app.log");
         Configuration.set("level", "info");
