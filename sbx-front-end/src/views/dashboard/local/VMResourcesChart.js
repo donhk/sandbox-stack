@@ -2,7 +2,7 @@ import React, {useEffect, useRef} from 'react'
 import {getStyle} from '@coreui/utils'
 import {CChart} from '@coreui/react-chartjs'
 
-export const ResourcesChart = () => {
+export const VMResourcesChart = () => {
     const chartRef = useRef(null)
 
     useEffect(() => {
@@ -48,39 +48,12 @@ export const ResourcesChart = () => {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September'],
         datasets: [
             {
-                label: 'RAM',
-                backgroundColor: 'rgb(112,199,23)',
-                borderColor: 'rgb(112,199,23)',
-                pointBackgroundColor: 'rgb(112,199,23)',
+                label: 'VMs History',
+                backgroundColor: 'rgb(0,236,180)',
+                borderColor: 'rgb(0,236,180)',
+                pointBackgroundColor: 'rgb(0,236,180)',
                 pointBorderColor: '#fff',
                 data: [40, 20, 12, 39, 10, 40, 39, 80, 40],
-                fill: false,
-            },
-            {
-                label: 'CPU',
-                backgroundColor: 'rgb(233,0,243)',
-                borderColor: 'rgb(233,0,243)',
-                pointBackgroundColor: 'rgb(233,0,243)',
-                pointBorderColor: '#fff',
-                data: [1, 2, 100, 29, 17, 5, 55, 40, 10],
-                fill: false,
-            },
-            {
-                label: 'Storage',
-                backgroundColor: 'rgb(11,121,176)',
-                borderColor: 'rgb(11,121,176)',
-                pointBackgroundColor: 'rgb(11,121,176)',
-                pointBorderColor: '#fff',
-                data: [40, 17, 29, 15, 23, 56, 55, 11, 22],
-                fill: false,
-            },
-            {
-                label: 'Network',
-                backgroundColor: 'rgb(253,122,0)',
-                borderColor: 'rgb(253,122,0)',
-                pointBackgroundColor: 'rgb(253,122,0)',
-                pointBorderColor: '#fff',
-                data: [60, 22, 98, 19, 1, 2, 10, 20, 30],
                 fill: false,
             },
         ],
