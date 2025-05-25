@@ -8,10 +8,18 @@ import dev.donhk.rest.types.Port;
 import dev.donhk.rest.types.StorageUnit;
 
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Optional;
 
 public class DbUtils {
+
+    public static String formatDayHourMin(Timestamp timestamp) {
+        SimpleDateFormat formatter = new SimpleDateFormat("d:HH");
+        return formatter.format(timestamp);
+    }
+
     public static Machine machineRow2Machine(DBService db, MachineRow machineRow) throws SQLException {
         List<VMPortRow> vmPortRows = db.listVmPorts(machineRow.uuid());
         List<StorageUnit> storageUnits = db.listStorageDisks(machineRow.uuid());

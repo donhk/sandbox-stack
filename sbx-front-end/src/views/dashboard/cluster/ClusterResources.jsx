@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {CCard, CCardBody, CCol, CHeader, CRow} from "@coreui/react";
-import {ResourcesChart} from "src/views/dashboard/ResourcesCharts";
-import {VMResourcesChart} from "src/views/dashboard/VMResourcesChart";
+import {ResourcesChart} from "src/views/dashboard/cluster/charts/ResourcesCharts";
+import {VMResourcesChart} from "src/views/dashboard/cluster/VMResourcesChart";
 
 const remoteData = [
     {
@@ -198,7 +198,7 @@ const fetchMockClusterData = async () => {
     });
 };
 
-const ClusterInformation = () => {
+const ClusterResources = () => {
     const [cluster, setCluster] = useState([]);
 
     useEffect(() => {
@@ -230,4 +230,4 @@ const ClusterInformation = () => {
     );
 };
 
-export default ClusterInformation;
+export default ClusterResources;

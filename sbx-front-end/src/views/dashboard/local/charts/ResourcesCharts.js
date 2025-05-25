@@ -1,0 +1,114 @@
+import React, {useEffect, useRef} from 'react';
+import {getStyle} from '@coreui/utils'
+import {CChart} from '@coreui/react-chartjs'
+import {useDispatch, useSelector} from "react-redux";
+import axios from "axios";
+import {config} from "src/config";
+
+const fetchLocalResources = async () => {
+    try {
+        return (await axios.get(config.baseUrl + '/api/local-resources')).data;
+    } catch (error) {
+        console.error('Error:', error);
+        return {};
+    }
+};
+
+const options = {
+    plugins: {
+        legend: {
+            labels: {
+                color: getStyle('--cui-body-color'),
+            },
+        },
+    },
+    scales: {
+        x: {
+            grid: {
+                color: getStyle('--cui-border-color-translucent'),
+            },
+            ticks: {
+                color: getStyle('--cui-body-color'),
+            },
+            type: 'category',
+        },
+        y: {
+            grid: {
+                color: getStyle('--cui-border-color-translucent'),
+            },
+            ticks: {
+                color: getStyle('--cui-body-color'),
+            },
+            beginAtZero: true,
+        },
+    },
+    elements: {
+        line: {
+            tension: 0.3,
+        },
+        point: {
+            radius: 2,
+            hitRadius: 10,
+            hoverRadius: 4,
+            hoverBorderWidth: 3,
+        },
+    },
+}
+
+function convertDataToGraph(rawData) {
+    return {
+        labels: rawData.timestamps,
+        datasets: [
+            {
+                label: 'RAM',
+                backgroundColor: 'rgb(112,199,23)',
+                borderColor: 'rgb(112,199,23)',
+                pointBackgroundColor: 'rgb(112,199,23)',
+                pointBorderColor: '#fff',
+                data: rawData.ram,
+                fill: false,
+            },
+            {
+                label: 'CPU',
+                backgroundColor: 'rgb(233,0,243)',
+                borderColor: 'rgb(233,0,243)',
+                pointBackgroundColor: 'rgb(233,0,243)',
+                pointBorderColor: '#fff',
+                data: rawData.cpu,
+                fill: false,
+            },
+            {
+                label: 'Storage',
+                backgroundColor: 'rgb(11,121,176)',
+                borderColor: 'rgb(11,121,176)',
+                pointBackgroundColor: 'rgb(11,121,176)',
+                pointBorderColor: '#fff',
+                data: rawData.storage,
+                fill: false,
+            },
+            {
+                label: 'Network',
+                backgroundColor: 'rgb(253,122,0)',
+                borderColor: 'rgb(253,122,0)',
+                pointBackgroundColor: 'rgb(253,122,0)',
+                pointBorderColor: '#fff',
+                data: rawData.network,
+                fill: false,
+            },
+        ],
+    };
+}
+
+export const ResourcesChart = () => {
+    const dispatch = useDispatch();
+    const localResources = useSelector((state) => state.localResources);
+    useEffect(() => {
+        (async () => {
+            const rawData = await fetchLocalResources();
+            dispatch({type: 'set', localResources: convertDataToGraph(rawData)});
+        })();
+    }, [dispatch]);
+    const chartRef = useRef(null);
+
+    return <CChart type="line" data={localResources} options={options} ref={chartRef}/>
+}

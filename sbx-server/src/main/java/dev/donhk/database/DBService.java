@@ -214,46 +214,44 @@ public class DBService {
         return rows;
     }
 
-    public List<ResourceRow> getLocalResources(String resource, int granularity, int daysBack) throws SQLException {
+    public List<ResourceRow> getLocalResources(String resource, int granularityMin, int daysBack, int limit) throws SQLException {
         List<ResourceRow> rows = new ArrayList<>();
-        String sql = """
-                SELECT
-                    FORMATDATETIME(
-                        TIMESTAMPADD(
-                            MINUTE,
-                            -MOD(MINUTE(created_at), 10),
-                            created_at
-                        ),
-                        'yyyy-MM-dd HH:mm'
-                    ) AS dt_min,
-                    AVG(usage) AS avg_usage
-                FROM resources_table
-                WHERE
-                    resource = ? AND
-                    created_at <= CURRENT_TIMESTAMP AND
-                    created_at >= DATEADD('DAY', ?, CURRENT_DATE)
-                GROUP BY
-                    FORMATDATETIME(
-                        TIMESTAMPADD(
-                            MINUTE,
-                            -MOD(MINUTE(created_at), 10),
-                            created_at
-                        ),
-                        'yyyy-MM-dd HH:mm'
-                    )
-                ORDER BY dt_min ASC;
-                """;
+
+        String sql = String.format(
+                """
+                        SELECT
+                            TIMESTAMPADD(
+                                MINUTE,
+                                -MOD(DATEDIFF(MINUTE, TIMESTAMP '1970-01-01 00:00:00', created_at), %d),
+                                created_at
+                            ) AS dt_min,
+                            AVG(usage) AS avg_usage
+                        FROM resources_table
+                        WHERE
+                            resource = ? AND
+                            created_at <= CURRENT_TIMESTAMP AND
+                            created_at >= DATEADD('DAY', ?, CURRENT_DATE)
+                        GROUP BY dt_min
+                        ORDER BY dt_min DESC
+                        limit ?;
+                        """, granularityMin
+        );
+
         try (Connection connection = pool.getConnection();
              PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, resource);
             stmt.setInt(2, daysBack);
+            stmt.setInt(3, limit);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     rows.add(ResourceRow.fromResultSet(rs));
                 }
             }
         }
+        // Reverse result to keep ascending time order (since SQL returns DESC)
+        Collections.reverse(rows);
         return rows;
     }
+
 
 }
