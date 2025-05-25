@@ -7,6 +7,7 @@ const initialState = {
     vmSnapshots: [],
     sbxSettings: {},
     localResources: {},
+    localVmResources: {},
 }
 
 const changeState = (state = initialState, {type, ...rest}) => {

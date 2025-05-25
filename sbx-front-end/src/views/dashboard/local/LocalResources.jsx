@@ -1,6 +1,6 @@
 import {CCard, CCardBody, CCol, CHeader, CRow} from "@coreui/react";
 import {ResourcesChart} from "src/views/dashboard/local/charts/ResourcesCharts";
-import {VMResourcesChart} from "src/views/dashboard/local/VMResourcesChart";
+import {VMResourcesChart} from "src/views/dashboard/local/charts/VMResourcesChart";
 import React from "react";
 
 const LocalResources = () => {
