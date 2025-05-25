@@ -8,10 +8,7 @@ import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
 import dev.donhk.web.rest.observability.GetOperationState;
-import dev.donhk.web.rest.ux.ListMachines;
-import dev.donhk.web.rest.ux.ListSeeds;
-import dev.donhk.web.rest.ux.LocalResources;
-import dev.donhk.web.rest.ux.SbxSettings;
+import dev.donhk.web.rest.ux.*;
 import dev.donhk.web.rest.vm.DeleteVm;
 import dev.donhk.web.rest.vm.GetVm;
 import dev.donhk.web.rest.vm.PinVm;
@@ -88,7 +85,7 @@ public class HttpService {
         app.get("/api/vm-seeds/list", new ListSeeds(this.db));
         app.get("/api/sbx-settings", new SbxSettings(this.config));
         app.get("/api/local-resources", new LocalResources(this.db));
-        app.get("/api/vm-resources-chart", new LocalResources(this.db));
+        app.get("/api/local-vm-resources", new LocalVmResources(this.db));
     }
 
     private void vmOperations(Javalin app) {

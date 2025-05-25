@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {CCard, CCardBody, CCol, CHeader, CRow} from "@coreui/react";
 import {ResourcesChart} from "src/views/dashboard/cluster/charts/ResourcesCharts";
-import {VMResourcesChart} from "src/views/dashboard/cluster/VMResourcesChart";
+import {VMResourcesChart} from "src/views/dashboard/cluster/charts/VMResourcesChart";
 
 const remoteData = [
     {

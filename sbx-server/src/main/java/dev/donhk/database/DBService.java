@@ -7,6 +7,7 @@ import dev.donhk.pojos.*;
 import dev.donhk.rest.types.ResourceRow;
 import dev.donhk.rest.types.StorageUnit;
 import dev.donhk.rest.types.VMSnapshot;
+import dev.donhk.rest.types.VmHistoryRow;
 
 import java.sql.*;
 import java.util.*;
@@ -253,5 +254,36 @@ public class DBService {
         return rows;
     }
 
+    public VmHistoryRow getVmsHistory(int monthsBack, int limit) throws SQLException {
+        String sql = """
+                SELECT
+                     FORMATDATETIME(deleted_at, 'MMMM yyyy') AS year_month,
+                        COUNT(*) AS vm_count
+                 FROM vms_history
+                 WHERE deleted_at >= DATEADD('MONTH', ?, CURRENT_DATE)
+                 GROUP BY FORMATDATETIME(deleted_at, 'MMMM yyyy')
+                 ORDER BY MIN(deleted_at) DESC
+                 LIMIT ?
+                """;
+
+        List<String> labels = new ArrayList<>();
+        List<String> counts = new ArrayList<>();
+        try (Connection connection = pool.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, monthsBack);
+            stmt.setInt(2, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    labels.add(rs.getString("year_month"));
+                    counts.add(rs.getString("vm_count"));
+                }
+            }
+        }
+        // Reverse result to keep ascending time order (since SQL returns DESC)
+        Collections.reverse(labels);
+        Collections.reverse(counts);
+        return new VmHistoryRow(labels, counts);
+
+    }
 
 }
