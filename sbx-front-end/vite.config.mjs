@@ -12,7 +12,7 @@ export default defineConfig(() => {
     css: {
       postcss: {
         plugins: [
-          autoprefixer({}), // add options if needed
+          autoprefixer({}),
         ],
       },
     },
@@ -40,10 +40,9 @@ export default defineConfig(() => {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.scss'],
     },
     server: {
+      host: '0.0.0.0',
       port: 3000,
-      proxy: {
-        // https://vitejs.dev/config/server-options.html
-      },
+      allowedHosts: true,
     },
   }
 })

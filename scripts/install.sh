@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #
-# Author: donhk
+# Author: Frederick Alvarez
 # Date: 29/03/25
-# Licence: MTI
+# Licence: MIT
 #
 
 if [[ -z "${JAVA_HOME+x}" ]]; then
@@ -24,7 +24,7 @@ VIRTUALBOX_SDK=$(curl -s "${VIRTUALBOX_HOME}/${VIRTUALBOX_VERSION}/MD5SUMS" | gr
 VIRTUALBOX_SDK_ZIP=vbox_sdk.zip
 SDK_DESTINATION="vbox-glue/src/main/libs"
 JAVA_VBOX_XPCOM="sdk/bindings/xpcom/java/vboxjxpcom.jar"
-VBOX_GLUE_CODE="vbox-glue/src/main/java/dev/donhk/vbox"
+VBOX_GLUE_CODE="vbox-glue/src/main/java"
 VBOX_HOME="/usr/lib/virtualbox"
 
 
@@ -61,18 +61,21 @@ download_vbox_sdk(){
 }
 
 update_virtualbox_imports() {
-  local path="${VBOX_GLUE_CODE}/"
+  local path="${VBOX_GLUE_CODE}"
   local major_minor
   major_minor=$(echo "$VIRTUALBOX_VERSION" | cut -d. -f1,2 | tr '.' '_')
   local new_prefix="org.virtualbox_${major_minor}."
+  local pattern='org\.virtualbox_[0-9]+_[0-9]+\.'
 
   echo ""
-  echo "Updating SDK version of virtualbox in java files🔍"
+  echo "Updating SDK version of virtualbox in java files 🔍"
   echo ""
 
   find "$path" -type f -name '*.java' -print0 | while IFS= read -r -d '' file; do
-    echo "Updating 📃 ${file}"
-    sed -i -E "s/org\.virtualbox_[0-9]+_[0-9]+\./$new_prefix/g" "$file"
+    if grep -qE "$pattern" "$file"; then
+      echo "Updating 📃 ${file}"
+      sed -i -E "s/${pattern}/${new_prefix}/g" "$file"
+    fi
   done
 
   echo ""

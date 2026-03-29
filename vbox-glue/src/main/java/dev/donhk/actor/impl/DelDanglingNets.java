@@ -4,7 +4,7 @@ import dev.donhk.actor.VBoxMessage;
 import dev.donhk.pojos.ActiveMachineRow;
 import dev.donhk.vbox.VBoxManager;
 import org.tinylog.Logger;
-import org.virtualbox_7_1.INATNetwork;
+import org.virtualbox_7_2.INATNetwork;
 
 import java.util.ArrayList;
 import java.util.List;

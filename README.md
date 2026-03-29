@@ -14,7 +14,15 @@ install software and configure the machine to connect to other VMs using virtual
 
 ## 🧭 Prod-Deployment
 
-This section is WiP
+```bash
+# Install the latest VirtualBox & VirtualBox-Extension Pack
+/usr/bin/virtualbox -h       
+#Oracle VirtualBox Manager v7.2.6
+#Copyright (C) 2005-2026 Oracle and/or its affiliates
+
+# Then update the dependencies
+scripts/install.sh 
+```
 
 ```bash
 curl -O donhk/sandbox-stack/releases/xxx/file.tar.xz

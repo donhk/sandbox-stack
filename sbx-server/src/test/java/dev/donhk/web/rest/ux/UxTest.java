@@ -45,35 +45,33 @@ public class UxTest {
 
 
         // Mock DbUtils.machineRow2Machine
-        mockStaticDevDonhkDbUtils(machineRow, serviceMock);
+        try (var mockedDbUtils = Mockito.mockStatic(dev.donhk.database.DbUtils.class)) {
+            mockedDbUtils.when(() ->
+                    dev.donhk.database.DbUtils.machineRow2Machine(eq(serviceMock), eq(machineRow))
+            ).thenReturn(
+                    new Machine(
+                            "mch-018",
+                            "Machine-R",
+                            "seed-18",
+                            "snap-018",
+                            new Network(NetworkType.NAT, "network3"),
+                            Optional.of("192.168.10.18"),
+                            "local1.localhost:3999",
+                            List.of(),
+                            "machine-r",
+                            MachineState.RUNNING,
+                            new Timestamp(1),
+                            new Timestamp(2),
+                            List.of(),
+                            false
+                    )
+            );
 
-        // Act
-        machines.handle(ctx);
+            // Act
+            machines.handle(ctx);
+        }
 
         // Assert
         verify(ctx).json(any(List.class));
-    }
-
-    private void mockStaticDevDonhkDbUtils(MachineRow machineRow, DBService dbService) {
-        Mockito.mockStatic(dev.donhk.database.DbUtils.class).when(() ->
-                dev.donhk.database.DbUtils.machineRow2Machine(eq(dbService), eq(machineRow))
-        ).thenReturn(
-                new Machine(
-                        "mch-018",
-                        "Machine-R",
-                        "seed-18",
-                        "snap-018",
-                        new Network(NetworkType.NAT, "network3"),
-                        Optional.of("192.168.10.18"),
-                        "local1.localhost:3999",
-                        List.of(),
-                        "machine-r",
-                        MachineState.RUNNING,
-                        new Timestamp(1),
-                        new Timestamp(2),
-                        List.of(),
-                        false
-                )
-        );
     }
 }

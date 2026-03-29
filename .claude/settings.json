@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew*)",
+      "Bash(npm install*)",
+      "Bash(npm run*)",
+      "Bash(npm start*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git fetch*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git checkout*)",
+      "Bash(git stash*)",
+      "Bash(git pull*)",
+      "Bash(git merge*)",
+      "Bash(git rebase*)",
+      "Bash(git tag*)",
+      "Bash(git show*)",
+      "Bash(git blame*)",
+      "Bash(jq*)",
+      "Bash(cat*)",
+      "Bash(ls*)",
+      "Bash(find*)",
+      "Bash(grep*)",
+      "Bash(mkdir*)",
+      "Bash(cp*)",
+      "Bash(mv*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(rm -rf*)"
+    ]
+  }
+}
