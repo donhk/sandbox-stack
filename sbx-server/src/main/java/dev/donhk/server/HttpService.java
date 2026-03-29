@@ -13,8 +13,10 @@ import dev.donhk.web.rest.vm.DeleteVm;
 import dev.donhk.web.rest.vm.GetVm;
 import dev.donhk.web.rest.vm.PinVm;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
+import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
 public class HttpService {
@@ -61,22 +63,27 @@ public class HttpService {
         app.get("/", new FrontEnd());
 
         // CORS Setup
-        app.before(ctx -> {
-            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000"); // Allow React dev server
-            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        });
+        app.before(this::corsOrigins);
 
         // Respond to preflight OPTIONS requests
         app.options("/*", ctx -> {
-            ctx.header("Access-Control-Allow-Origin", "http://localhost:3000");
-            ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            ctx.status(204); // No content for preflight
+            corsOrigins(ctx);
+            ctx.status(204);
         });
 
         Logger.info("Sandboxer Service Started at http://0.0.0.0:{}", config.sbxServicePort);
         app.start(config.sbxServicePort);
+    }
+
+    private void corsOrigins(@NotNull Context ctx) {
+        String origin = ctx.header("Origin");
+        if ("http://localhost:3000".equals(origin) ||
+                "http://pop-os.tail9437a0.ts.net:3000".equals(origin)) {
+            ctx.header("Access-Control-Allow-Origin", origin);
+        }
+        ctx.header("Vary", "Origin");
+        ctx.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
     private void ux(Javalin app) {

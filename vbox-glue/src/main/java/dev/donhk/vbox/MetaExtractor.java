@@ -1,9 +1,9 @@
 package dev.donhk.vbox;
 
 import dev.donhk.pojos.MachineMeta;
-import org.virtualbox_7_1.IMachine;
-import org.virtualbox_7_1.ISnapshot;
-import org.virtualbox_7_1.MachineState;
+import org.virtualbox_7_2.IMachine;
+import org.virtualbox_7_2.ISnapshot;
+import org.virtualbox_7_2.MachineState;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

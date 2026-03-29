@@ -6,7 +6,7 @@ import dev.donhk.actor.impl.ListMachines;
 import dev.donhk.helpers.Constants;
 import dev.donhk.vbox.VBoxManager;
 import org.tinylog.Logger;
-import org.virtualbox_7_1.VirtualBoxManager;
+import org.virtualbox_7_2.VirtualBoxManager;
 
 public class VBoxActor extends AbstractActor {
 

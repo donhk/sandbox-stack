@@ -2,7 +2,7 @@ package dev.donhk.vbox;
 
 import dev.donhk.helpers.Utils;
 import org.tinylog.Logger;
-import org.virtualbox_7_1.*;
+import org.virtualbox_7_2.*;
 
 import java.io.File;
 import java.util.*;
@@ -648,7 +648,7 @@ public class VBoxManager {
         if (machineName == null) {
             return false;
         }
-        //since the method findMachine returns org.virtualbox_7_1.VBoxException
+        //since the method findMachine returns org.virtualbox_7_2.VBoxException
 
         //if the machine doesn't exist we will need to find it by
         //ourselves iterating over all the machines
