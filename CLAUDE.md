@@ -63,9 +63,47 @@ Javalin HTTP (port 8008)
 - `sbx-server/.../boot/ServerMain.java` — CLI entry point (PicoCLI)
 - `sbx-server/.../server/SandboxerApp.java` — Wires up all services
 - `sbx-server/.../server/HttpService.java` — All REST route definitions
+- `sbx-server/.../database/DBService.java` — All SQL queries; add new DB methods here
+- `sbx-server/.../database/DbUtils.java` — Converts `MachineRow` → `Machine` REST type
 - `sbx-server/.../database/DatabaseServer.java` — H2 lifecycle
 - `sbx-server/src/main/resources/schema.sql` — Table definitions
-- `sbx-server/src/main/resources/sql_seed.sql` — Sample data
+- `sbx-server/src/main/resources/sql_seed.sql` — Sample data (30 VMs, seeds, ports, storage)
+
+### REST Handler Layout
+
+Handlers live under `sbx-server/.../web/rest/` organized by domain:
+
+| Package | Handlers |
+|---------|---------|
+| `web/rest/vm/` | `CreateVm`, `GetVm`, `StartVm`, `UpdateVm`, `DeleteVm`, `PinVm` |
+| `web/rest/network/` | `CreateNatNetwork`, `GetNatNetwork`, `CreatePortForwardRule`, `UpdatePortForwardRule` |
+| `web/rest/storage/` | `CreateStorageUnits`, `GetStorageUnits` |
+| `web/rest/ux/` | `ListMachines`, `ListSeeds`, `LocalResources`, `LocalVmResources`, `SbxSettings` |
+| `web/rest/observability/` | `GetOperationState` |
+
+### REST API Routes
+
+| Method | Path | Handler | Actor call |
+|--------|------|---------|-----------|
+| POST | `/api/machine` | `CreateVm` | `CloneMachineRequest`, `CreateNatNetworkRequest` |
+| GET | `/api/machine/{uuid}` | `GetVm` | — |
+| POST | `/api/machine/start` | `StartVm` | `LaunchMachineRequest` |
+| PUT | `/api/machine` | `UpdateVm` | — |
+| PUT | `/api/machine/pin` | `PinVm` | — |
+| DELETE | `/api/machine/{uuid}` | `DeleteVm` | `CleanUpVMRequest`, `RemoveNatNetworkRequest` |
+| POST | `/api/nat-network` | `CreateNatNetwork` | `CreateNatNetworkRequest` |
+| GET | `/api/nat-network` | `GetNatNetwork` | — |
+| POST | `/api/port-forward-rule` | `CreatePortForwardRule` | `AddNATNetworkPortForwardRuleRequest` |
+| PUT | `/api/port-forward-rule` | `UpdatePortForwardRule` | `RmNATNetworkPortForwardRuleRequest`, `AddNATNetworkPortForwardRuleRequest` |
+| POST | `/api/storage-unit` | `CreateStorageUnits` | `CreateSharedStorageRequest`, `AddSharedStorageToMachineRequest` |
+| GET | `/api/storage-unit` | `GetStorageUnits` | — |
+| GET | `/api/machines/list` | `ListMachines` | — |
+| GET | `/api/vm-seeds/list` | `ListSeeds` | — |
+| GET | `/api/local-resources` | `LocalResources` | — |
+| GET | `/api/local-vm-resources` | `LocalVmResources` | — |
+| GET | `/api/sbx-settings` | `SbxSettings` | — |
+| POST | `/api/operation/state` | `GetOperationState` | — |
+| GET | `/api/ping` | inline | — |
 
 ### Key Frontend Files
 
@@ -94,8 +132,31 @@ The server is configured entirely via command-line args (no config files):
 ## Code Conventions
 
 - All Java packages under `dev.donhk.*`
-- Each REST endpoint has its own handler class (e.g., `GetVm`, `ListMachines`, `DeleteMachine`)
-- Request/response DTOs live in `sbx-common` under `dev.donhk.rest.*`
-- Database row POJOs live in `dev.donhk.pojos.*`
-- VirtualBox operations are always async via Akka actor messaging in `vbox-glue`
+- Each REST endpoint has its own handler class implementing `io.javalin.http.Handler`
+- Request/response DTOs live in `sbx-common` under `dev.donhk.rest.*` (organized by domain: `operations/vm/`, `network/`, `storage/`, `types/`)
+- Database row POJOs live in `dev.donhk.pojos.*` (e.g., `MachineRow`, `VMPortRow`)
+- VirtualBox operations go through `VBoxActor` via `Utilities.askSync(vboxActor, request)` — never call `VBoxManager` directly from the REST layer
+- All `VBoxMessage` request/response pairs are Java records in `vbox-glue/.../actor/VBoxMessage.java`; each has a corresponding impl class in `actor/impl/` and a `.match()` handler in `VBoxActor.createReceive()`
+- `DBService` is the only place with SQL; handlers call it for all DB reads and writes
+- `DbUtils.machineRow2Machine(db, row)` is the canonical way to convert a `MachineRow` to a `Machine` REST response
+- Handlers that need the actor port pool use `config.sbxServiceLowPort` / `config.sbxServiceHighPort` (default 11200–11500) and call `db.findUsedHostPorts()` to find a free slot
+- NAT network names must match `\w+_\w+` pattern (e.g., `mch001_network`) so `DelDanglingNets` can identify them
 - Logging: TinyLog via SLF4J facade
+
+## Database Schema Summary
+
+| Table | Purpose |
+|-------|---------|
+| `virtual_machines` | One row per VM; `id` is the UUID (e.g. `mch-031`) |
+| `vm_ports` | Port forward rules; `host_port` comes from the port pool |
+| `vm_storage_units` | Attached VDI disks; `name` is the full disk path on the host |
+| `vm_seeds` | Snapshot templates used as clone sources; keyed on `(prefix, snapshot_name)` |
+| `vms_history` | Append-only log of deleted VMs |
+| `resources_table` | Time-series resource metrics (CPU, RAM, storage, network) |
+| `instances` | Server hostnames |
+
+## Actor Message Map
+
+All VBoxManager operations are exposed as messages in `VBoxMessage`. The full set:
+
+`GetVBoxVersionRequest` · `CloneMachineRequest` · `LaunchMachineRequest` · `AddSharedDirectoryRequest` · `CreateSharedStorageRequest` · `AddSharedStorageToMachineRequest` · `AddNATNetworkPortForwardRuleRequest` · `AddNATPortForwardRuleRequest` · `RmNATPortForwardRuleRequest` · `RmNATNetworkPortForwardRuleRequest` · `GetPortForwardRulesRequest` · `GetMachineIPv4Request` · `CleanUpVMRequest` · `MachineExistsRequest` · `CreateNatNetworkRequest` · `RemoveNatNetworkRequest` · `ListMachinesRequest` · `DelDanglingNetsRequest`

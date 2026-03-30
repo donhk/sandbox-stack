@@ -69,3 +69,34 @@ npm run build
 ```bash
 ./gradlew build
 ```
+
+## ⚙️ Server Configuration
+
+The server is configured entirely via command-line flags. All options have sensible defaults for local development.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-s` | `8008` | REST API port |
+| `-d` | `sandbox` | H2 database name |
+| `-u` / `-p` | `dbmaster` / `welcome` | DB credentials |
+| `-w` | `8082` | H2 web console port |
+| `-t` | `9094` | H2 TCP port |
+| `-l` / `-h` | `11200` / `11500` | Host port pool range for VM port-forwarding rules |
+| `-r` | `false` | Reset DB schema on startup |
+| `-ss` | `false` | Seed sample data on startup |
+| `-o` | `http://localhost:3000` | Allowed CORS origins (comma-separated) |
+
+### CORS origins
+
+By default only `http://localhost:3000` is allowed. Pass `-o` to add or replace origins:
+
+```bash
+# Local dev — already allows localhost:3000 and pop-os.tail9437a0.ts.net:3000
+./gradlew :sbx-server:runDev
+
+# Production: only the Tailscale node
+./gradlew :sbx-server:run --args="-o http://pop-os.tail9437a0.ts.net:3000"
+
+# Custom set
+./gradlew :sbx-server:run --args="-o http://localhost:3000,http://myhost.example.com:3000"
+```

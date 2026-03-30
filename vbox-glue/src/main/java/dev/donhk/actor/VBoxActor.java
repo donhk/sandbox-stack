@@ -1,8 +1,7 @@
 package dev.donhk.actor;
 
 import akka.actor.AbstractActor;
-import dev.donhk.actor.impl.DelDanglingNets;
-import dev.donhk.actor.impl.ListMachines;
+import dev.donhk.actor.impl.*;
 import dev.donhk.helpers.Constants;
 import dev.donhk.vbox.VBoxManager;
 import org.tinylog.Logger;
@@ -37,8 +36,42 @@ public class VBoxActor extends AbstractActor {
                 .match(VBoxMessage.PingRequest2.class, msg -> {
                     getSender().tell(new VBoxMessage.PingResponse2(msg.name(), msg.age()), getSelf());
                 })
-                .match(VBoxMessage.ListMachinesRequest.class, request -> getSender().tell(new ListMachines(this.boxManager).dispatch(), getSelf()))
-                .match(VBoxMessage.DelDanglingNetsRequest.class, request -> getSender().tell(new DelDanglingNets(this.boxManager, request.activeMachineRows()).dispatch(), getSelf()))
+                .match(VBoxMessage.ListMachinesRequest.class, request ->
+                        getSender().tell(new ListMachines(this.boxManager).dispatch(), getSelf()))
+                .match(VBoxMessage.DelDanglingNetsRequest.class, request ->
+                        getSender().tell(new DelDanglingNets(this.boxManager, request.activeMachineRows()).dispatch(), getSelf()))
+                .match(VBoxMessage.GetVBoxVersionRequest.class, request ->
+                        getSender().tell(new GetVBoxVersion(this.boxManager).dispatch(), getSelf()))
+                .match(VBoxMessage.CloneMachineRequest.class, request ->
+                        getSender().tell(new CloneMachine(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.LaunchMachineRequest.class, request ->
+                        getSender().tell(new LaunchMachine(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.AddSharedDirectoryRequest.class, request ->
+                        getSender().tell(new AddSharedDirectory(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.CreateSharedStorageRequest.class, request ->
+                        getSender().tell(new CreateSharedStorage(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.AddSharedStorageToMachineRequest.class, request ->
+                        getSender().tell(new AddSharedStorageToMachine(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.AddNATNetworkPortForwardRuleRequest.class, request ->
+                        getSender().tell(new AddNATNetworkPortForwardRule(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.AddNATPortForwardRuleRequest.class, request ->
+                        getSender().tell(new AddNATPortForwardRule(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.RmNATPortForwardRuleRequest.class, request ->
+                        getSender().tell(new RmNATPortForwardRule(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.RmNATNetworkPortForwardRuleRequest.class, request ->
+                        getSender().tell(new RmNATNetworkPortForwardRule(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.GetPortForwardRulesRequest.class, request ->
+                        getSender().tell(new GetPortForwardRules(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.GetMachineIPv4Request.class, request ->
+                        getSender().tell(new GetMachineIPv4(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.CleanUpVMRequest.class, request ->
+                        getSender().tell(new CleanUpVM(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.MachineExistsRequest.class, request ->
+                        getSender().tell(new MachineExists(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.CreateNatNetworkRequest.class, request ->
+                        getSender().tell(new CreateNatNetwork(this.boxManager, request).dispatch(), getSelf()))
+                .match(VBoxMessage.RemoveNatNetworkRequest.class, request ->
+                        getSender().tell(new RemoveNatNetwork(this.boxManager, request).dispatch(), getSelf()))
                 .build();
     }
 

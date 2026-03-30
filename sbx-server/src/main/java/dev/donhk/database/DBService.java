@@ -4,10 +4,9 @@ package dev.donhk.database;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.donhk.config.Config;
 import dev.donhk.pojos.*;
-import dev.donhk.rest.types.ResourceRow;
-import dev.donhk.rest.types.StorageUnit;
-import dev.donhk.rest.types.VMSnapshot;
-import dev.donhk.rest.types.VmHistoryRow;
+import dev.donhk.rest.types.*;
+
+import java.util.List;
 
 import java.sql.*;
 import java.util.*;
@@ -252,6 +251,172 @@ public class DBService {
         // Reverse result to keep ascending time order (since SQL returns DESC)
         Collections.reverse(rows);
         return rows;
+    }
+
+    public void insertMachine(String uuid, String name, String seedName, String snapshot,
+                              String network, NetworkType networkType, String hostname, MachineState state) throws SQLException {
+        String sql = """
+                INSERT INTO virtual_machines
+                    (id, name, seed_name, snapshot, network, network_type, hostname, machine_state, created_at, updated_at, locked)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE)
+                """;
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.setString(2, name);
+            ps.setString(3, seedName);
+            ps.setString(4, snapshot);
+            ps.setString(5, network);
+            ps.setString(6, networkType.name());
+            ps.setString(7, hostname);
+            ps.setString(8, state.name());
+            ps.executeUpdate();
+        }
+    }
+
+    public void deleteMachine(String uuid) throws SQLException {
+        String selectSql = "SELECT name, snapshot, network, network_type FROM virtual_machines WHERE id = ?";
+        String historySql = """
+                INSERT INTO vms_history (deleted_at, name, snapshot, network, network_type)
+                VALUES (CURRENT_TIMESTAMP, ?, ?, ?, ?)
+                """;
+        String deletePortsSql = "DELETE FROM vm_ports WHERE vm_id = ?";
+        String deleteStorageSql = "DELETE FROM vm_storage_units WHERE vm_id = ?";
+        String deleteSql = "DELETE FROM virtual_machines WHERE id = ?";
+
+        try (Connection connection = pool.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                String name = null, snapshot = null, network = null, networkType = null;
+                try (PreparedStatement ps = connection.prepareStatement(selectSql)) {
+                    ps.setString(1, uuid);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            name = rs.getString("name");
+                            snapshot = rs.getString("snapshot");
+                            network = rs.getString("network");
+                            networkType = rs.getString("network_type");
+                        }
+                    }
+                }
+                if (name != null) {
+                    try (PreparedStatement ps = connection.prepareStatement(historySql)) {
+                        ps.setString(1, name);
+                        ps.setString(2, snapshot);
+                        ps.setString(3, network);
+                        ps.setString(4, networkType);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(deletePortsSql)) {
+                    ps.setString(1, uuid);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = connection.prepareStatement(deleteStorageSql)) {
+                    ps.setString(1, uuid);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
+                    ps.setString(1, uuid);
+                    ps.executeUpdate();
+                }
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        }
+    }
+
+    public void updateMachineState(String uuid, MachineState state) throws SQLException {
+        String sql = "UPDATE virtual_machines SET machine_state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, state.name());
+            ps.setString(2, uuid);
+            ps.executeUpdate();
+        }
+    }
+
+    public void updateMachineTimestamp(String uuid) throws SQLException {
+        String sql = "UPDATE virtual_machines SET updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.executeUpdate();
+        }
+    }
+
+    public void insertVmPort(String uuid, String name, int hostPort, int vmPort) throws SQLException {
+        String sql = "INSERT INTO vm_ports (vm_id, name, host_port, vm_port) VALUES (?, ?, ?, ?)";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.setString(2, name);
+            ps.setInt(3, hostPort);
+            ps.setInt(4, vmPort);
+            ps.executeUpdate();
+        }
+    }
+
+    public Optional<VMPortRow> findVmPort(String uuid, int vmPort) throws SQLException {
+        String sql = "SELECT vm_id as uuid, name, host_port, vm_port FROM vm_ports WHERE vm_id = ? AND vm_port = ?";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid);
+            ps.setInt(2, vmPort);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new VMPortRow(
+                            rs.getString("uuid"),
+                            rs.getString("name"),
+                            rs.getInt("host_port"),
+                            rs.getInt("vm_port")
+                    ));
+                }
+                return Optional.empty();
+            }
+        }
+    }
+
+    public void updateVmPortName(String uuid, int vmPort, String newRuleName) throws SQLException {
+        String sql = "UPDATE vm_ports SET name = ? WHERE vm_id = ? AND vm_port = ?";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newRuleName);
+            ps.setString(2, uuid);
+            ps.setInt(3, vmPort);
+            ps.executeUpdate();
+        }
+    }
+
+    public void insertStorageUnits(String uuid, List<String> diskPaths, long sizeBytes) throws SQLException {
+        String sql = "INSERT INTO vm_storage_units (vm_id, name, size_bytes) VALUES (?, ?, ?)";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (String diskPath : diskPaths) {
+                ps.setString(1, uuid);
+                ps.setString(2, diskPath);
+                ps.setLong(3, sizeBytes);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
+
+    public List<Integer> findUsedHostPorts() throws SQLException {
+        List<Integer> ports = new ArrayList<>();
+        String sql = "SELECT host_port FROM vm_ports";
+        try (Connection connection = pool.getConnection();
+             Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                ports.add(rs.getInt("host_port"));
+            }
+        }
+        return ports;
     }
 
     public VmHistoryRow getVmsHistory(int monthsBack, int limit) throws SQLException {
