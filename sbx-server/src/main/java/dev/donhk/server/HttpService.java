@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
+import dev.donhk.web.rest.network.ApplyPortForwardRules;
 import dev.donhk.web.rest.network.CreateNatNetwork;
 import dev.donhk.web.rest.network.CreatePortForwardRule;
 import dev.donhk.web.rest.network.GetNatNetwork;
@@ -98,7 +99,7 @@ public class HttpService {
 
     private void vmOperations(JavalinDefaultRoutingApi app) {
         app.post("/api/machine", new CreateVm(this.vboxActor, this.db, this.config));
-        app.get("/api/machine/{uuid}", new GetVm(this.db));
+        app.get("/api/machine/{uuid}", new GetVm(this.vboxActor, this.db));
         app.post("/api/machine/start", new StartVm(this.vboxActor, this.db));
         app.put("/api/machine/pin", new PinVm(this.db));
         app.put("/api/machine", new UpdateVm(this.db));
@@ -109,6 +110,7 @@ public class HttpService {
         app.post("/api/nat-network", new CreateNatNetwork(this.vboxActor, this.db));
         app.get("/api/nat-network", new GetNatNetwork(this.db));
         app.post("/api/port-forward-rule", new CreatePortForwardRule(this.vboxActor, this.db, this.config));
+        app.post("/api/port-forward-rule/apply", new ApplyPortForwardRules(this.vboxActor, this.db));
         app.put("/api/port-forward-rule", new UpdatePortForwardRule(this.vboxActor, this.db));
     }
 

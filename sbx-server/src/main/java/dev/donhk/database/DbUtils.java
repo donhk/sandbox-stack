@@ -29,7 +29,7 @@ public class DbUtils {
                 machineRow.seed_name(),
                 machineRow.snapshot(),
                 new Network(machineRow.networkType(), machineRow.network()),
-                Optional.of(machineRow.vmIpAddress()),
+                Optional.ofNullable(machineRow.vmIpAddress()),
                 machineRow.hostname(),
                 vmPortRows.stream().map(m -> new Port(m.name(), m.hostPort(), m.vmPort())).toList(),
                 machineRow.vmHostname(),

@@ -22,8 +22,6 @@ import dev.donhk.rest.storage.CreateStorageUnitsRequest;
 import dev.donhk.rest.storage.CreateStorageUnitsResponse;
 import dev.donhk.rest.types.Machine;
 import dev.donhk.rest.types.VMSnapshot;
-import org.tinylog.Logger;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -111,11 +109,21 @@ public class SandboxClient {
                 CreatePortForwardRuleResponse.class);
     }
 
+    /**
+     * Applies all stored port-forward rules for the given VM to VirtualBox.
+     * Must be called after the VM has booted and received an IP address.
+     */
+    public void applyPortForwardRules(String uuid) {
+        post("/api/port-forward-rule/apply", new UuidBody(uuid), Void.class);
+    }
+
     public UpdatePortForwardRuleResponse updatePortForwardRule(String uuid, int vmPort, String newRuleName) {
         return put("/api/port-forward-rule",
                 new UpdatePortForwardRuleRequest(uuid, vmPort, newRuleName),
                 UpdatePortForwardRuleResponse.class);
     }
+
+    private record UuidBody(String uuid) {}
 
     // ── Storage ───────────────────────────────────────────────────────────────
 
@@ -196,7 +204,6 @@ public class SandboxClient {
     private HttpResponse<String> sendRaw(HttpRequest req, String path) {
         try {
             HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-            Logger.debug("{} {} -> {}", req.method(), path, resp.statusCode());
             if (resp.statusCode() >= 400) {
                 throw new SandboxException(req.method() + " " + path +
                         " failed [" + resp.statusCode() + "]: " + resp.body());

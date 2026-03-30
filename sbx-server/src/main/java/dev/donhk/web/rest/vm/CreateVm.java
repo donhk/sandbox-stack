@@ -15,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
 import java.net.InetAddress;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class CreateVm implements Handler {
 
@@ -26,6 +29,16 @@ public class CreateVm implements Handler {
         this.vboxActor = vboxActor;
         this.db = db;
         this.config = config;
+    }
+
+    private int allocateFreePort() throws Exception {
+        Set<Integer> used = new HashSet<>(db.findUsedHostPorts());
+        for (int p = config.sbxServiceLowPort; p <= config.sbxServiceHighPort; p++) {
+            if (!used.contains(p)) {
+                return p;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -59,6 +72,17 @@ public class CreateVm implements Handler {
 
         db.insertMachine(request.uuid(), request.name(), request.seedName(), request.snapshot(),
                 natNetwork, networkType, hostname, MachineState.INITIALIZED);
+
+        // Reserve an SSH host port now so callers know which port to use.
+        // The actual VBox NAT rule must be applied later (via /api/port-forward-rule/apply)
+        // once the VM has booted and received an IP address.
+        int sshHostPort = allocateFreePort();
+        if (sshHostPort == -1) {
+            Logger.warn("No free host ports available for SSH forwarding on machine {}", request.uuid());
+        } else {
+            db.insertVmPort(request.uuid(), "ssh", sshHostPort, 22);
+            Logger.info("Reserved SSH host port {} for machine {}", sshHostPort, request.uuid());
+        }
 
         ctx.status(201).json(new CreateMachineResponse(request.uuid()));
     }
