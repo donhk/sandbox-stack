@@ -7,11 +7,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dev.donhk.database.DBService;
 import dev.donhk.config.Config;
 import dev.donhk.web.handler.*;
+import dev.donhk.web.rest.network.CreateNatNetwork;
+import dev.donhk.web.rest.network.CreatePortForwardRule;
+import dev.donhk.web.rest.network.GetNatNetwork;
+import dev.donhk.web.rest.network.UpdatePortForwardRule;
 import dev.donhk.web.rest.observability.GetOperationState;
+import dev.donhk.web.rest.storage.CreateStorageUnits;
+import dev.donhk.web.rest.storage.GetStorageUnits;
 import dev.donhk.web.rest.ux.*;
-import dev.donhk.web.rest.vm.DeleteVm;
-import dev.donhk.web.rest.vm.GetVm;
-import dev.donhk.web.rest.vm.PinVm;
+import dev.donhk.web.rest.vm.*;
+
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
@@ -77,8 +82,7 @@ public class HttpService {
 
     private void corsOrigins(@NotNull Context ctx) {
         String origin = ctx.header("Origin");
-        if ("http://localhost:3000".equals(origin) ||
-                "http://pop-os.tail9437a0.ts.net:3000".equals(origin)) {
+        if (origin != null && config.corsOrigins.contains(origin)) {
             ctx.header("Access-Control-Allow-Origin", origin);
         }
         ctx.header("Vary", "Origin");
@@ -96,65 +100,24 @@ public class HttpService {
     }
 
     private void vmOperations(Javalin app) {
-        // Create a machine
-        app.post("/api/machine", ctx -> {
-            // expects JSON body: CreateMachineRequest
-        });
-
-        // Get machine info
+        app.post("/api/machine", new CreateVm(this.vboxActor, this.db, this.config));
         app.get("/api/machine/{uuid}", new GetVm(this.db));
-
-        // Start a machine
-        app.post("/api/machine/start", ctx -> {
-            // expects JSON body: StartMachineRequest
-        });
-
-        // Pin machine
+        app.post("/api/machine/start", new StartVm(this.vboxActor, this.db));
         app.put("/api/machine/pin", new PinVm(this.db));
-
-        // Update a machine
-        app.put("/api/machine", ctx -> {
-            // expects JSON body: UpdateMachineRequest
-        });
-
-        // Delete a machine
+        app.put("/api/machine", new UpdateVm(this.db));
         app.delete("/api/machine/{uuid}", new DeleteVm(this.vboxActor, this.db));
     }
 
     private void networkMode(Javalin app) {
-        // Create NAT network
-        app.post("/api/nat-network", ctx -> {
-            // expects JSON body: CreateNatNetworkRequest
-        });
-
-        // Get NAT network name
-        app.get("/api/nat-network", ctx -> {
-            // expects query param or JSON body: GetNatNetworkRequest
-        });
-
-        // Create port forward rule
-        app.post("/api/port-forward-rule", ctx -> {
-            // expects JSON body: CreatePortForwardRuleRequest
-        });
-
-        // Update port forward rule
-        app.put("/api/port-forward-rule", ctx -> {
-            // expects JSON body: UpdatePortForwardRuleRequest
-        });
-
+        app.post("/api/nat-network", new CreateNatNetwork(this.vboxActor, this.db));
+        app.get("/api/nat-network", new GetNatNetwork(this.db));
+        app.post("/api/port-forward-rule", new CreatePortForwardRule(this.vboxActor, this.db, this.config));
+        app.put("/api/port-forward-rule", new UpdatePortForwardRule(this.vboxActor, this.db));
     }
 
     private void storageOperations(Javalin app) {
-        // Create storage unit(s)
-        app.post("/api/storage-unit", ctx -> {
-            // expects JSON body: CreateStorageUnitsRequest
-        });
-
-        // Get storage unit(s)
-        app.get("/api/storage-unit", ctx -> {
-            // expects query param or JSON body: GetStorageUnitsRequest
-        });
-
+        app.post("/api/storage-unit", new CreateStorageUnits(this.vboxActor, this.db));
+        app.get("/api/storage-unit", new GetStorageUnits(this.db));
     }
 
     private void observability(Javalin app) {

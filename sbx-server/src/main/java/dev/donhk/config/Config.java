@@ -52,6 +52,9 @@ public class Config implements Runnable {
     @CommandLine.Option(names = {"-b", "--build-info"}, description = "Build information")
     public String buildInfo = "";
 
+    @CommandLine.Option(names = {"-o", "--cors-origins"}, description = "Allowed CORS origins, comma-separated", split = ",")
+    public java.util.List<String> corsOrigins = java.util.List.of("http://localhost:3000");
+
     @Override
     public void run() {
     }
