@@ -195,6 +195,7 @@ public class DBService {
         List<VMSnapshot> rows = new ArrayList<>();
         String sql = """
                 SELECT  prefix,
+                        machine_name,
                         vm_user,
                         vm_pass,
                         home,
@@ -212,6 +213,28 @@ public class DBService {
             }
         }
         return rows;
+    }
+
+    public void upsertSeed(String prefix, String machineName, String user, String pass, String home,
+                           String snapshotName, int cpus, int ramMb, String comments) throws SQLException {
+        String sql = """
+                MERGE INTO vm_seeds (prefix, machine_name, vm_user, vm_pass, home, snapshot_name, snapshot_cpus, snapshot_ram_mb, snapshot_comments)
+                KEY (prefix, snapshot_name)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, prefix);
+            ps.setString(2, machineName);
+            ps.setString(3, user);
+            ps.setString(4, pass);
+            ps.setString(5, home);
+            ps.setString(6, snapshotName);
+            ps.setInt(7, cpus);
+            ps.setInt(8, ramMb);
+            ps.setString(9, comments);
+            ps.executeUpdate();
+        }
     }
 
     public List<ResourceRow> getLocalResources(String resource, int granularityMin, int daysBack, int limit) throws SQLException {

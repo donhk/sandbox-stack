@@ -1,39 +1,22 @@
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
-import eslintPluginReact from 'eslint-plugin-react'
-import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
-import globals from 'globals'
+import globals from "globals";
+import pluginReact from "eslint-plugin-react";
+import { defineConfig } from "eslint/config";
 
-export default [
-  { ignores: ['eslint.config.mjs'] },
+export default defineConfig([
+  pluginReact.configs.flat.recommended,
   {
-    ...eslintPluginReact.configs.flat.recommended,
-    ...eslintPluginReact.configs.flat['jsx-runtime'],
-    files: ['src/**/*.{js,jsx}'],
-    plugins: {
-      eslintPluginReact,
-      'react-hooks': eslintPluginReactHooks,
-    },
+    files: ["**/*.{js,mjs,cjs,jsx}"],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
+      globals: globals.browser,
     },
     settings: {
       react: {
-        version: 'detect',
+        version: "detect",
       },
     },
     rules: {
-      ...eslintPluginReactHooks.configs.recommended.rules,
+      "react/prop-types": "off",
+      "react/react-in-jsx-scope": "off",
     },
   },
-  eslintPluginPrettierRecommended,
-]
+]);

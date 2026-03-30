@@ -1,0 +1,24 @@
+plugins {
+    id "java-library"
+    id "application"
+}
+
+application {
+    mainClass = 'dev.donhk.HappyPathSingleMachineTest'
+}
+
+tasks.register('runHappyPath', JavaExec) {
+    group       = 'verification'
+    description = 'Happy-path integration test: provisions a VM, gathers host info, waits 60s, tears down'
+    classpath   = sourceSets.main.runtimeClasspath
+    mainClass   = 'dev.donhk.HappyPathSingleMachineTest'
+    // Override with: ./gradlew :sbx-it:runHappyPath -Psbx.seed=rockyboxc1 -Psbx.snapshot=snap-rocky1
+    systemProperties = project.properties.findAll { k, v -> k.startsWith('sbx.') }
+}
+
+dependencies {
+    implementation project(":sbx-client")
+    implementation project(":sbx-common")
+
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.23.0'
+}

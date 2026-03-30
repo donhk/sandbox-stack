@@ -1,6 +1,6 @@
 package dev.donhk.actor;
 
-import akka.actor.AbstractActor;
+import org.apache.pekko.actor.AbstractActor;
 import dev.donhk.actor.impl.*;
 import dev.donhk.helpers.Constants;
 import dev.donhk.vbox.VBoxManager;

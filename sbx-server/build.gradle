@@ -14,16 +14,16 @@ dependencies {
     implementation project(":vbox-glue")
     implementation 'info.picocli:picocli:4.7.7'
 
-    implementation 'io.javalin:javalin:6.6.0'
-    testImplementation 'io.javalin:javalin-testtools:6.6.0'
+    implementation 'io.javalin:javalin:7.1.0'
+    testImplementation 'io.javalin:javalin-testtools:7.1.0'
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.19.0'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.21.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.2'
 
-    implementation 'com.zaxxer:HikariCP:6.3.0'
-    implementation 'com.h2database:h2:2.3.232'
-    implementation 'commons-io:commons-io:2.19.0'
+    implementation 'com.zaxxer:HikariCP:7.0.2'
+    implementation 'com.h2database:h2:2.4.240'
+    implementation 'commons-io:commons-io:2.21.0'
 }
 
 // Configure built-in run task
@@ -41,7 +41,7 @@ tasks.register('runDev', JavaExec) {
     jvmArgs = ['-Dvbox.home=/usr/lib/virtualbox']
     args = [
             '--db-reset=true',
-            '--sql-seeds=true',
+            '--sql-seeds=false',
             '--cors-origins=http://localhost:3000,http://pop-os.tail9437a0.ts.net:3000'
     ]
 }

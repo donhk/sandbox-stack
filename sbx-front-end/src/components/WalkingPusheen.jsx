@@ -1,11 +1,11 @@
-import React from "react";
+import React from 'react';
 
-const WalkingPusheen = ({visible}) => {
-    if (!visible) return null;
+const WalkingPusheen = ({ visible }) => {
+  if (!visible) return null;
 
-    return (
-        <>
-            <style>{`
+  return (
+    <>
+      <style>{`
         @keyframes walk-back-and-forth {
           0% { right: -150px; }
           100% { right: 100vw; }
@@ -32,16 +32,16 @@ const WalkingPusheen = ({visible}) => {
         }
       `}</style>
 
-            <div
-                className="pusheen-wrapper"
-                onAnimationIteration={(e) => {
-                    e.currentTarget.classList.toggle("reverse");
-                }}
-            >
-                <img src="/pusheen.gif" alt="Walking cat"/>
-            </div>
-        </>
-    );
+      <div
+        className="pusheen-wrapper"
+        onAnimationIteration={(e) => {
+          e.currentTarget.classList.toggle('reverse');
+        }}
+      >
+        <img src="/pusheen.gif" alt="Walking cat" />
+      </div>
+    </>
+  );
 };
 
 export default WalkingPusheen;

@@ -1,6 +1,6 @@
 package dev.donhk.server;
 
-import akka.actor.ActorRef;
+import org.apache.pekko.actor.ActorRef;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -21,6 +21,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
+import io.javalin.router.JavalinDefaultRoutingApi;
 import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
@@ -39,41 +40,36 @@ public class HttpService {
     public void startServer() {
         Logger.info("Creating instance of HttpServer ");
 
-        Javalin app = Javalin.create(config -> {
-                    config.staticFiles.add(
-                            staticFileConfig -> {
-                                staticFileConfig.hostedPath = "/";
-                                staticFileConfig.directory = "/public";
-                                staticFileConfig.location = Location.CLASSPATH;
-                            }
-                    );
-                    JavalinJackson mapper = new JavalinJackson();
-                    mapper.updateMapper(m -> {
-                        m.registerModule(new Jdk8Module());
-                        m.registerModule(new JavaTimeModule());
-                        m.enable(SerializationFeature.INDENT_OUTPUT);
-                    });
-                    config.jsonMapper(mapper);
-                }
-        );
+        Javalin app = Javalin.create(cfg -> {
+            cfg.staticFiles.add(staticFileConfig -> {
+                staticFileConfig.hostedPath = "/";
+                staticFileConfig.directory = "/public";
+                staticFileConfig.location = Location.CLASSPATH;
+            });
+            JavalinJackson mapper = new JavalinJackson();
+            mapper.updateMapper(m -> {
+                m.registerModule(new Jdk8Module());
+                m.registerModule(new JavaTimeModule());
+                m.enable(SerializationFeature.INDENT_OUTPUT);
+            });
+            cfg.jsonMapper(mapper);
 
-        // REST API endpoint
-        vmOperations(app);
-        ux(app);
-        networkMode(app);
-        storageOperations(app);
-        observability(app);
+            // CORS setup
+            cfg.routes.before(this::corsOrigins);
+            cfg.routes.options("/*", ctx -> {
+                corsOrigins(ctx);
+                ctx.status(204);
+            });
 
-        // Default route (optional)
-        app.get("/", new FrontEnd());
+            // Default route
+            cfg.routes.get("/", new FrontEnd());
 
-        // CORS Setup
-        app.before(this::corsOrigins);
-
-        // Respond to preflight OPTIONS requests
-        app.options("/*", ctx -> {
-            corsOrigins(ctx);
-            ctx.status(204);
+            // REST API endpoints
+            vmOperations(cfg.routes);
+            ux(cfg.routes);
+            networkMode(cfg.routes);
+            storageOperations(cfg.routes);
+            observability(cfg.routes);
         });
 
         Logger.info("Sandboxer Service Started at http://0.0.0.0:{}", config.sbxServicePort);
@@ -90,16 +86,17 @@ public class HttpService {
         ctx.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
-    private void ux(Javalin app) {
+    private void ux(JavalinDefaultRoutingApi app) {
         // List machines
         app.get("/api/machines/list", new ListMachines(this.db));
+        app.post("/api/machines/scan", new ScanMachines(this.vboxActor, this.db));
         app.get("/api/vm-seeds/list", new ListSeeds(this.db));
         app.get("/api/sbx-settings", new SbxSettings(this.config));
         app.get("/api/local-resources", new LocalResources(this.db));
         app.get("/api/local-vm-resources", new LocalVmResources(this.db));
     }
 
-    private void vmOperations(Javalin app) {
+    private void vmOperations(JavalinDefaultRoutingApi app) {
         app.post("/api/machine", new CreateVm(this.vboxActor, this.db, this.config));
         app.get("/api/machine/{uuid}", new GetVm(this.db));
         app.post("/api/machine/start", new StartVm(this.vboxActor, this.db));
@@ -108,19 +105,19 @@ public class HttpService {
         app.delete("/api/machine/{uuid}", new DeleteVm(this.vboxActor, this.db));
     }
 
-    private void networkMode(Javalin app) {
+    private void networkMode(JavalinDefaultRoutingApi app) {
         app.post("/api/nat-network", new CreateNatNetwork(this.vboxActor, this.db));
         app.get("/api/nat-network", new GetNatNetwork(this.db));
         app.post("/api/port-forward-rule", new CreatePortForwardRule(this.vboxActor, this.db, this.config));
         app.put("/api/port-forward-rule", new UpdatePortForwardRule(this.vboxActor, this.db));
     }
 
-    private void storageOperations(Javalin app) {
+    private void storageOperations(JavalinDefaultRoutingApi app) {
         app.post("/api/storage-unit", new CreateStorageUnits(this.vboxActor, this.db));
         app.get("/api/storage-unit", new GetStorageUnits(this.db));
     }
 
-    private void observability(Javalin app) {
+    private void observability(JavalinDefaultRoutingApi app) {
         // Get operation state
         app.post("/api/operation/state", new GetOperationState());
         app.get("/api/ping", ctx -> ctx.result("pong"));

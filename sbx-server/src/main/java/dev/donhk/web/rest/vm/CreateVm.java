@@ -1,6 +1,6 @@
 package dev.donhk.web.rest.vm;
 
-import akka.actor.ActorRef;
+import org.apache.pekko.actor.ActorRef;
 import dev.donhk.actors.Utilities;
 import dev.donhk.actor.VBoxMessage;
 import dev.donhk.config.Config;

@@ -1,7 +1,7 @@
 package dev.donhk.actors;
 
-import akka.actor.ActorRef;
-import akka.pattern.Patterns;
+import org.apache.pekko.actor.ActorRef;
+import org.apache.pekko.pattern.Patterns;
 import org.tinylog.Logger;
 
 import java.time.Duration;
