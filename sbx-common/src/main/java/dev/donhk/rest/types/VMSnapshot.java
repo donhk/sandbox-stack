@@ -8,6 +8,7 @@ import java.sql.SQLException;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record VMSnapshot(
         String prefix,
+        String machine_name,
         String vm_user,
         String vm_pass,
         String home,
@@ -19,6 +20,7 @@ public record VMSnapshot(
     public static VMSnapshot fromResultSet(ResultSet rs) throws SQLException {
         return new VMSnapshot(
                 rs.getString("prefix"),
+                rs.getString("machine_name"),
                 rs.getString("vm_user"),
                 rs.getString("vm_pass"),
                 rs.getString("home"),

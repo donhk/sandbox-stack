@@ -39,6 +39,7 @@ CREATE TABLE if not exists virtual_machines
 CREATE TABLE if not exists vm_seeds
 (
     prefix VARCHAR(100) NOT NULL,
+    machine_name VARCHAR(100) NOT NULL,
     vm_user VARCHAR(100) NOT NULL,
     vm_pass VARCHAR(255) NOT NULL,
     home VARCHAR(500) NOT NULL,

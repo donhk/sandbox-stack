@@ -1,6 +1,6 @@
 package dev.donhk.server;
 
-import akka.actor.ActorRef;
+import org.apache.pekko.actor.ActorRef;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -89,6 +89,7 @@ public class HttpService {
     private void ux(JavalinDefaultRoutingApi app) {
         // List machines
         app.get("/api/machines/list", new ListMachines(this.db));
+        app.post("/api/machines/scan", new ScanMachines(this.vboxActor, this.db));
         app.get("/api/vm-seeds/list", new ListSeeds(this.db));
         app.get("/api/sbx-settings", new SbxSettings(this.config));
         app.get("/api/local-resources", new LocalResources(this.db));

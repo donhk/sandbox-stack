@@ -63,6 +63,8 @@ cd sbx-front-end
 npm install
 npm start
 npm run build
+# format
+npx eslint src/
 ```
 
 ### Compile Server
@@ -99,4 +101,16 @@ By default only `http://localhost:3000` is allowed. Pass `-o` to add or replace 
 
 # Custom set
 ./gradlew :sbx-server:run --args="-o http://localhost:3000,http://myhost.example.com:3000"
+```
+
+```bash
+sanbdoxer group: sanbdoxer
+prefix: snap
+```
+
+```bash
+user:
+pass:
+home:
+comments:
 ```

@@ -41,7 +41,7 @@ tasks.register('runDev', JavaExec) {
     jvmArgs = ['-Dvbox.home=/usr/lib/virtualbox']
     args = [
             '--db-reset=true',
-            '--sql-seeds=true',
+            '--sql-seeds=false',
             '--cors-origins=http://localhost:3000,http://pop-os.tail9437a0.ts.net:3000'
     ]
 }
