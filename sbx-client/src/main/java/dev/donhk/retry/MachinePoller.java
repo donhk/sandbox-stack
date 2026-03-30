@@ -25,9 +25,13 @@ public class MachinePoller {
      */
     public Machine waitForState(MachineState target, Duration timeout) throws InterruptedException {
         long deadline = System.currentTimeMillis() + timeout.toMillis();
+        MachineState lastLogged = null;
         while (System.currentTimeMillis() < deadline) {
             Machine m = client.getMachine(uuid);
-            Logger.debug("Machine {} state={}", uuid, m.machineState());
+            if (m.machineState() != lastLogged) {
+                Logger.info("Machine {} state={}", uuid, m.machineState());
+                lastLogged = m.machineState();
+            }
             if (m.machineState() == MachineState.FAILED || m.machineState() == MachineState.TERMINATED) {
                 throw new SandboxException("Machine " + uuid + " entered terminal state: " + m.machineState());
             }
@@ -44,9 +48,9 @@ public class MachinePoller {
      */
     public String waitForIp(Duration timeout) throws InterruptedException {
         long deadline = System.currentTimeMillis() + timeout.toMillis();
+        Logger.info("Waiting for IP on machine {}", uuid);
         while (System.currentTimeMillis() < deadline) {
             Machine m = client.getMachine(uuid);
-            Logger.debug("Machine {} ip={}", uuid, m.vmIpAddress());
             if (m.machineState() == MachineState.FAILED || m.machineState() == MachineState.TERMINATED) {
                 throw new SandboxException("Machine " + uuid + " entered terminal state: " + m.machineState());
             }

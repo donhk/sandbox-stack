@@ -353,6 +353,16 @@ public class DBService {
         }
     }
 
+    public void updateMachineIp(String uuid, String ip) throws SQLException {
+        String sql = "UPDATE virtual_machines SET vm_ip_address = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (Connection connection = pool.getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, ip);
+            ps.setString(2, uuid);
+            ps.executeUpdate();
+        }
+    }
+
     public void updateMachineState(String uuid, MachineState state) throws SQLException {
         String sql = "UPDATE virtual_machines SET machine_state = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         try (Connection connection = pool.getConnection();

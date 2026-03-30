@@ -486,25 +486,10 @@ public class VBoxManager {
             return null;
         }
         IMachine machine = vbox.findMachine(machineName);
-
-        //scan the machine properties looking for its ip, once
-        //we get it, we can assemble the command to add the new rule
-        Holder<List<String>> keys = new Holder<>();
-        Holder<List<String>> values = new Holder<>();
-        Holder<List<Long>> timestamps = new Holder<>();
-        Holder<List<String>> flags = new Holder<>();
-        machine.enumerateGuestProperties(null, keys, values, timestamps, flags);
-        String ipv4 = null;
-        for (int i = 0; i < keys.value.size(); i++) {
-            String key = keys.value.get(i);
-            String val = values.value.get(i);
-            if (key.contains("GuestInfo/Net/0/V4/IP")) {
-                ipv4 = val;
-                break;
-            }
-        }
-        //if this property was not found, we can't continue
-        return ipv4;
+        // Query NIC 0's IPv4 address directly via the guest property key.
+        // Equivalent to: VBoxManage guestproperty get <vm> "/VirtualBox/GuestInfo/Net/0/V4/IP"
+        String ipv4 = machine.getGuestPropertyValue("/VirtualBox/GuestInfo/Net/0/V4/IP");
+        return (ipv4 == null || ipv4.isBlank()) ? null : ipv4;
     }
 
     public void cleanUpVM(String machineName) {

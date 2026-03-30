@@ -1,11 +1,12 @@
 package dev.donhk.client;
 
 import dev.donhk.exception.SandboxException;
-import dev.donhk.rest.network.CreatePortForwardRuleResponse;
 import dev.donhk.rest.operations.vm.CreateMachineRequest;
+import dev.donhk.rest.types.Machine;
 import dev.donhk.rest.types.MachineState;
 import dev.donhk.rest.types.Network;
 import dev.donhk.rest.types.NetworkType;
+import dev.donhk.rest.types.Port;
 import dev.donhk.retry.MachinePoller;
 import dev.donhk.ssh.SshClient;
 import org.tinylog.Logger;
@@ -156,9 +157,21 @@ public abstract class TestEngine {
         client.startMachine(uuid);
         Logger.info("Machine started: {}", uuid);
 
-        // 4. Create SSH port-forward rule (host:hostPort → VM:22)
-        CreatePortForwardRuleResponse portResp = client.createPortForwardRule(uuid, 22, "ssh");
-        sshHostPort = portResp.hostPort();
+        // 4. Wait for VM to receive an IP, then apply VBox NAT port-forward rules.
+        //    The SSH host port was already reserved by createMachine; we just read it back.
+        MachinePoller poller = buildPoller(uuid);
+        String vmIp = poller.waitForIp(Duration.ofMinutes(5));
+        Logger.info("Machine {} has IP: {}", uuid, vmIp);
+
+        client.applyPortForwardRules(uuid);
+        Logger.info("Port-forward rules applied for machine {}", uuid);
+
+        Machine machine = client.getMachine(uuid);
+        sshHostPort = machine.ports().stream()
+                .filter(p -> "ssh".equals(p.name()) && p.vmPort() == 22)
+                .mapToInt(Port::hostPort)
+                .findFirst()
+                .orElseThrow(() -> new SandboxException("No SSH port-forward found for machine " + uuid));
         Logger.info("SSH port forward: {}:{} -> VM:22", client.getHost(), sshHostPort);
 
         // 5. Wait for SSH to become reachable
